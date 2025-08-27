@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 const storeSchema = new mongoose.Schema({
     name: { type: String, required: true },
     dealerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Dealer', required: true },
@@ -33,4 +34,4 @@ const storeSchema = new mongoose.Schema({
   });
 
   const Store = mongoose.model('Store', storeSchema);
-  module.exports = Store;
+  export default Store;

@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 const adminSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     permissions: [{
@@ -10,4 +11,4 @@ const adminSchema = new mongoose.Schema({
   });
 
   const Admin = mongoose.model('Admin', adminSchema);
-  module.exports = Admin;
+  export default Admin;

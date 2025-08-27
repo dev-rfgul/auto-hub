@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 const sparePartSchema = new mongoose.Schema({
     name: { type: String, required: true },
     partNumber: { type: String, required: true, unique: true },
@@ -33,4 +34,4 @@ const sparePartSchema = new mongoose.Schema({
   });
 
   const SparePart = mongoose.model('SparePart', sparePartSchema);
-  module.exports = SparePart;
+  export default SparePart;
