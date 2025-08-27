@@ -1,8 +1,8 @@
 import User from '../models/user.model.js';
 
 export const registerUser = async (req, res) => {
-  const { username, email, password, firstName, lastName, phone, address } = req.body;
-  const user = new User({ username, email, password, firstName, lastName, phone, address });
+  const { username, email, password, role } = req.body;
+  const user = new User({ username, email, password, role });
   await user.save();
   res.status(201).json(user);
 };
