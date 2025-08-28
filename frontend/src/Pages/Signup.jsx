@@ -1,44 +1,54 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, User, Mail, Lock, Phone, MapPin, Building, Globe, Hash } from 'lucide-react';
-import axios from 'axios';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  Eye,
+  EyeOff,
+  User,
+  Mail,
+  Lock,
+  Phone,
+  MapPin,
+  Building,
+  
+} from "lucide-react";
+import axios from "axios";
 
 const Signup = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    phone: '',
-    role: 'user',
-    address: ''
+    username: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    phone: "",
+    role: "user",
+    address: "",
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
-      setFormData(prev => ({
+    if (name.includes(".")) {
+      const [parent, child] = name.split(".");
+      setFormData((prev) => ({
         ...prev,
         [parent]: {
           ...prev[parent],
-          [child]: value
-        }
+          [child]: value,
+        },
       }));
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [name]: value
+        [name]: value,
       }));
     }
     // Clear error when user starts typing
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
@@ -47,55 +57,58 @@ const Signup = () => {
 
     // Username validation
     if (!formData.username.trim()) {
-      newErrors.username = 'Username is required';
+      newErrors.username = "Username is required";
     } else if (formData.username.length < 3) {
-      newErrors.username = 'Username must be at least 3 characters';
+      newErrors.username = "Username must be at least 3 characters";
     }
 
     // Email validation
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = "Please enter a valid email address";
     }
 
     // Password validation
     if (!formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = "Password is required";
     } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+      newErrors.password = "Password must be at least 6 characters";
     }
 
     // Confirm password validation
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password';
+      newErrors.confirmPassword = "Please confirm your password";
     } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = "Passwords do not match";
     }
 
     // Phone validation
-    if (formData.phone && !/^[+]?[1-9][\d]{0,15}$/.test(formData.phone.replace(/\s/g, ''))) {
-      newErrors.phone = 'Please enter a valid phone number';
+    if (
+      formData.phone &&
+      !/^[+]?[1-9][\d]{0,15}$/.test(formData.phone.replace(/\s/g, ""))
+    ) {
+      newErrors.phone = "Please enter a valid phone number";
     }
 
     // Address validation (optional - no validation needed)
     // Removed the incorrect validation that was setting error for provided addresses
 
     setErrors(newErrors);
-    console.log('Validation errors:', newErrors);
+    console.log("Validation errors:", newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
-    console.log("handle submit clicked")
+    console.log("handle submit clicked");
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     setIsLoading(true);
-    
+
     try {
       // Prepare data for submission (remove confirmPassword)
       const submitData = {
@@ -104,27 +117,28 @@ const Signup = () => {
         password: formData.password,
         phone: formData.phone,
         role: formData.role,
-        address: formData.address
+        address: formData.address,
       };
 
-
       // API call would go here
-      console.log('Signup data:', submitData);
-      
+      console.log("Signup data:", submitData);
+
       // Simulate API call
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/user/register`, submitData);
-      console.log('Signup response from api :', response);
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/user/register`,
+        submitData
+      );
+      console.log("Signup response from api :", response);
 
       // Redirect based on role
-      if (formData.role === 'dealer') {
-        navigate('/dealer-dashboard');
+      if (formData.role === "dealer") {
+        navigate("/dealer-dashboard");
       } else {
-        navigate('/');
+        navigate("/");
       }
-      
     } catch (error) {
-      console.error('Signup error:', error);
-      setErrors({ general: 'Something went wrong. Please try again.' });
+      console.error("Signup error:", error);
+      setErrors({ general: "Something went wrong. Please try again." });
     } finally {
       setIsLoading(false);
     }
@@ -142,8 +156,11 @@ const Signup = () => {
           Create your account
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          Or{' '}
-          <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
+          Or{" "}
+          <Link
+            to="/login"
+            className="font-medium text-blue-600 hover:text-blue-500"
+          >
             sign in to your existing account
           </Link>
         </p>
@@ -155,47 +172,61 @@ const Signup = () => {
             {/* Role Selection */}
 
             <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-2xl">
-  <h3 className="text-center text-lg font-semibold text-gray-800 mb-4">
-    Choose Account Type
-  </h3>
+              <h3 className="text-center text-lg font-semibold text-gray-800 mb-4">
+                Choose Account Type
+              </h3>
 
-  <div className="grid grid-cols-2 gap-6">
-    {/* User Signup */}
-    <Link to="/user-signup">
-      <div className="relative flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md hover:border-blue-500 transition duration-200 cursor-pointer">
-        <div className="w-12 h-12 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full mb-3">
-          <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M10 10a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 1114 0H3z" />
-          </svg>
-        </div>
-        <span className="block text-sm font-medium text-gray-900">Customer</span>
-        <span className="mt-1 text-center text-xs text-gray-500">
-          Buy auto parts and get support
-        </span>
-      </div>
-    </Link>
+              <div className="grid grid-cols-2 gap-6">
+                {/* User Signup */}
+                <Link to="/user-signup">
+                  <div className="relative flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md hover:border-blue-500 transition duration-200 cursor-pointer">
+                    <div className="w-12 h-12 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full mb-3">
+                      <svg
+                        className="h-6 w-6"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M10 10a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 1114 0H3z" />
+                      </svg>
+                    </div>
+                    <span className="block text-sm font-medium text-gray-900">
+                      Customer
+                    </span>
+                    <span className="mt-1 text-center text-xs text-gray-500">
+                      Buy auto parts and get support
+                    </span>
+                  </div>
+                </Link>
 
-    {/* Dealer Signup */}
-    <Link to="/dealer-signup">
-      <div className="relative flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md hover:border-blue-500 transition duration-200 cursor-pointer">
-        <div className="w-12 h-12 flex items-center justify-center bg-green-100 text-green-600 rounded-full mb-3">
-          <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M4 3a2 2 0 00-2 2v1h16V5a2 2 0 00-2-2H4zM2 9h16v6a2 2 0 01-2 2H4a2 2 0 01-2-2V9z" />
-          </svg>
-        </div>
-        <span className="block text-sm font-medium text-gray-900">Dealer</span>
-        <span className="mt-1 text-center text-xs text-gray-500">
-          Sell auto parts and manage store
-        </span>
-      </div>
-    </Link>
-  </div>
-</div>
-
+                {/* Dealer Signup */}
+                <Link to="/dealer-signup">
+                  <div className="relative flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md hover:border-blue-500 transition duration-200 cursor-pointer">
+                    <div className="w-12 h-12 flex items-center justify-center bg-green-100 text-green-600 rounded-full mb-3">
+                      <svg
+                        className="h-6 w-6"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M4 3a2 2 0 00-2 2v1h16V5a2 2 0 00-2-2H4zM2 9h16v6a2 2 0 01-2 2H4a2 2 0 01-2-2V9z" />
+                      </svg>
+                    </div>
+                    <span className="block text-sm font-medium text-gray-900">
+                      Dealer
+                    </span>
+                    <span className="mt-1 text-center text-xs text-gray-500">
+                      Sell auto parts and manage store
+                    </span>
+                  </div>
+                </Link>
+              </div>
+            </div>
 
             {/* Username */}
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="username"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Username
               </label>
               <div className="mt-1 relative">
@@ -210,7 +241,7 @@ const Signup = () => {
                   value={formData.username}
                   onChange={handleInputChange}
                   className={`appearance-none block w-full pl-10 pr-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                    errors.username ? 'border-red-300' : 'border-gray-300'
+                    errors.username ? "border-red-300" : "border-gray-300"
                   }`}
                   placeholder="Enter your username"
                 />
@@ -222,7 +253,10 @@ const Signup = () => {
 
             {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Email address
               </label>
               <div className="mt-1 relative">
@@ -238,7 +272,7 @@ const Signup = () => {
                   value={formData.email}
                   onChange={handleInputChange}
                   className={`appearance-none block w-full pl-10 pr-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                    errors.email ? 'border-red-300' : 'border-gray-300'
+                    errors.email ? "border-red-300" : "border-gray-300"
                   }`}
                   placeholder="Enter your email"
                 />
@@ -250,7 +284,10 @@ const Signup = () => {
 
             {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Password
               </label>
               <div className="mt-1 relative">
@@ -260,13 +297,13 @@ const Signup = () => {
                 <input
                   id="password"
                   name="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   autoComplete="new-password"
                   required
                   value={formData.password}
                   onChange={handleInputChange}
                   className={`appearance-none block w-full pl-10 pr-10 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                    errors.password ? 'border-red-300' : 'border-gray-300'
+                    errors.password ? "border-red-300" : "border-gray-300"
                   }`}
                   placeholder="Enter your password"
                 />
@@ -289,7 +326,10 @@ const Signup = () => {
 
             {/* Confirm Password */}
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Confirm Password
               </label>
               <div className="mt-1 relative">
@@ -299,13 +339,15 @@ const Signup = () => {
                 <input
                   id="confirmPassword"
                   name="confirmPassword"
-                  type={showConfirmPassword ? 'text' : 'password'}
+                  type={showConfirmPassword ? "text" : "password"}
                   autoComplete="new-password"
                   required
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
                   className={`appearance-none block w-full pl-10 pr-10 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                    errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
+                    errors.confirmPassword
+                      ? "border-red-300"
+                      : "border-gray-300"
                   }`}
                   placeholder="Confirm your password"
                 />
@@ -322,13 +364,18 @@ const Signup = () => {
                 </button>
               </div>
               {errors.confirmPassword && (
-                <p className="mt-2 text-sm text-red-600">{errors.confirmPassword}</p>
+                <p className="mt-2 text-sm text-red-600">
+                  {errors.confirmPassword}
+                </p>
               )}
             </div>
 
             {/* Phone */}
             <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="phone"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Phone Number (Optional)
               </label>
               <div className="mt-1 relative">
@@ -343,7 +390,7 @@ const Signup = () => {
                   value={formData.phone}
                   onChange={handleInputChange}
                   className={`appearance-none block w-full pl-10 pr-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                    errors.phone ? 'border-red-300' : 'border-gray-300'
+                    errors.phone ? "border-red-300" : "border-gray-300"
                   }`}
                   placeholder="Enter your phone number"
                 />
@@ -355,11 +402,16 @@ const Signup = () => {
 
             {/* Address Section */}
             <div className="border-t pt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Address Information (Optional)</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Address Information (Optional)
+              </h3>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {/* Street */}
                 <div className="sm:col-span-2">
-                  <label htmlFor="street" className="block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="street"
+                    className="block text-sm font-medium text-gray-700"
+                  >
                     Street Address
                   </label>
                   <div className="mt-1 relative">
@@ -402,14 +454,30 @@ const Signup = () => {
               >
                 {isLoading ? (
                   <div className="flex items-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
                     </svg>
                     Creating account...
                   </div>
                 ) : (
-                  'Create Account'
+                  "Create Account"
                 )}
               </button>
             </div>
@@ -417,11 +485,11 @@ const Signup = () => {
             {/* Terms and Privacy */}
             <div className="text-center">
               <p className="text-xs text-gray-500">
-                By creating an account, you agree to our{' '}
+                By creating an account, you agree to our{" "}
                 <a href="#" className="text-blue-600 hover:text-blue-500">
                   Terms of Service
-                </a>{' '}
-                and{' '}
+                </a>{" "}
+                and{" "}
                 <a href="#" className="text-blue-600 hover:text-blue-500">
                   Privacy Policy
                 </a>

@@ -1,9 +1,9 @@
 import mongoose from 'mongoose';
 const dealerSchema = new mongoose.Schema({
     // userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    businessName: { type: String, required: true },
+    name: { type: String, required: true },
     // businessLicense: { type: String, required: true },
-    taxId: String,
+    cnic: String,
     phone: String,
     address: {type:String,required:true},
     verificationStatus: { 
