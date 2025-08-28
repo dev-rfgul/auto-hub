@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, User, Mail, Lock, Phone, MapPin, Building, Globe, Hash } from 'lucide-react';
+import axios from 'axios';
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -123,8 +124,9 @@ const Signup = () => {
       console.log('Signup data:', submitData);
       
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/users/signup`, submitData);
+      console.log('Signup response from api :', response);
+
       // Redirect based on role
       if (formData.role === 'dealer') {
         navigate('/dealer-dashboard');
