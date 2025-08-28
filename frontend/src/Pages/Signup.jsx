@@ -14,13 +14,7 @@ const Signup = () => {
     confirmPassword: '',
     phone: '',
     role: 'user',
-    address: {
-      street: '',
-      city: '',
-      state: '',
-      zipCode: '',
-      country: ''
-    }
+    address: ''
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -84,16 +78,16 @@ const Signup = () => {
       newErrors.phone = 'Please enter a valid phone number';
     }
 
-    // Address validation (optional but if provided, validate format)
-    if (formData.address.street && !formData.address.city) {
-      newErrors.city = 'City is required if street is provided';
-    }
+    // Address validation (optional - no validation needed)
+    // Removed the incorrect validation that was setting error for provided addresses
 
     setErrors(newErrors);
+    console.log('Validation errors:', newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
+    console.log("handle submit clicked")
     e.preventDefault();
     
     if (!validateForm()) {
@@ -113,18 +107,12 @@ const Signup = () => {
         address: formData.address
       };
 
-      // Remove empty address fields
-      Object.keys(submitData.address).forEach(key => {
-        if (!submitData.address[key]) {
-          delete submitData.address[key];
-        }
-      });
 
       // API call would go here
       console.log('Signup data:', submitData);
       
       // Simulate API call
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/users/signup`, submitData);
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/user/register`, submitData);
       console.log('Signup response from api :', response);
 
       // Redirect based on role
@@ -395,101 +383,12 @@ const Signup = () => {
                     </div>
                     <input
                       id="street"
-                      name="address.street"
+                      name="address"
                       type="text"
-                      value={formData.address.street}
+                      value={formData.address}
                       onChange={handleInputChange}
                       className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                       placeholder="Enter street address"
-                    />
-                  </div>
-                </div>
-
-                {/* City */}
-                <div>
-                  <label htmlFor="city" className="block text-sm font-medium text-gray-700">
-                    City
-                  </label>
-                  <div className="mt-1 relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Building className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      id="city"
-                      name="address.city"
-                      type="text"
-                      value={formData.address.city}
-                      onChange={handleInputChange}
-                      className={`appearance-none block w-full pl-10 pr-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                        errors.city ? 'border-red-300' : 'border-gray-300'
-                      }`}
-                      placeholder="Enter city"
-                    />
-                  </div>
-                  {errors.city && (
-                    <p className="mt-2 text-sm text-red-600">{errors.city}</p>
-                  )}
-                </div>
-
-                {/* State */}
-                <div>
-                  <label htmlFor="state" className="block text-sm font-medium text-gray-700">
-                    State/Province
-                  </label>
-                  <div className="mt-1 relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Building className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      id="state"
-                      name="address.state"
-                      type="text"
-                      value={formData.address.state}
-                      onChange={handleInputChange}
-                      className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      placeholder="Enter state"
-                    />
-                  </div>
-                </div>
-
-                {/* ZIP Code */}
-                <div>
-                  <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700">
-                    ZIP/Postal Code
-                  </label>
-                  <div className="mt-1 relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Hash className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      id="zipCode"
-                      name="address.zipCode"
-                      type="text"
-                      value={formData.address.zipCode}
-                      onChange={handleInputChange}
-                      className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      placeholder="Enter ZIP code"
-                    />
-                  </div>
-                </div>
-
-                {/* Country */}
-                <div>
-                  <label htmlFor="country" className="block text-sm font-medium text-gray-700">
-                    Country
-                  </label>
-                  <div className="mt-1 relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Globe className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      id="country"
-                      name="address.country"
-                      type="text"
-                      value={formData.address.country}
-                      onChange={handleInputChange}
-                      className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      placeholder="Enter country"
                     />
                   </div>
                 </div>
