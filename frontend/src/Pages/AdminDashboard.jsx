@@ -14,28 +14,22 @@ const AdminDashboard = () => {
     const fetchAll = async () => {
       setLoading(true)
       try {
-        const [dRes, sRes] = await Promise.all([
-          fetch(`${base}/api/admin/dealers`, { credentials: 'include' }),
-          fetch(`${base}/api/admin/stores`, { credentials: 'include' })
+        const [dRes] = await Promise.all([
+          fetch(`${base}/api/admin/getAllDealers`, { credentials: 'include' }),
+        //   fetch(`${base}/api/admin/stores`, { credentials: 'include' })
         ])
 
-        if (!dRes.ok || !sRes.ok) throw new Error('Failed to fetch')
+        if (!dRes.ok) throw new Error('Failed to fetch')
 
         const dData = await dRes.json()
-        const sData = await sRes.json()
-
+        console.log(dData)
         setDealers(dData.dealers || dData || [])
-        setStores(sData.stores || sData || [])
       } catch (err) {
         console.warn('admin fetch error', err)
         setError('Could not load admin data — showing sample data')
         setDealers([
           { _id: 'd1', username: 'dealer1', email: 'deal1@example.com', phone: '123', isVerified: false },
           { _id: 'd2', username: 'dealer2', email: 'deal2@example.com', phone: '456', isVerified: true }
-        ])
-        setStores([
-          { _id: 's1', businessName: 'Store One', address: '123 Road', verificationStatus: 'pending', dealerId: 'd1' },
-          { _id: 's2', businessName: 'Store Two', address: '456 Ave', verificationStatus: 'verified', dealerId: 'd2' }
         ])
       } finally {
         setLoading(false)
@@ -59,7 +53,7 @@ const AdminDashboard = () => {
       if (resource === 'dealers') {
         setDealers((prev) => prev.map((d) => (d._id === id ? { ...d, isVerified: type === 'approve' } : d)))
       } else {
-        setStores((prev) => prev.map((s) => (s._id === id ? { ...s, verificationStatus: type === 'approve' ? 'verified' : 'rejected' } : s)))
+        // setStores((prev) => prev.map((s) => (s._id === id ? { ...s, verificationStatus: type === 'approve' ? 'verified' : 'rejected' } : s)))
       }
     } catch (err) {
       console.error('admin action error', err)
@@ -100,7 +94,7 @@ const AdminDashboard = () => {
                   {dealers.map((d) => (
                     <div key={d._id} className="flex items-center justify-between p-4 border rounded">
                       <div>
-                        <div className="font-medium text-gray-900">{d.username || d.email}</div>
+                        <div className="font-medium text-gray-900">{d.name || d.email}</div>
                         <div className="text-sm text-gray-600">{d.email}</div>
                         <div className="text-sm text-gray-500">{d.phone || '—'}</div>
                       </div>

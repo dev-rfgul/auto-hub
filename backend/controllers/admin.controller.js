@@ -17,7 +17,7 @@ export const verifyDealer = async (req, res) => {
   return res.status(200).json({ message: 'Dealer verified successfully' });
 };
 //get all dealers
-export const allDealers=async(req,res)=>{
+export const getAllDealers=async(req,res)=>{
   try {
     const dealers = await Dealer.find();
     return res.status(200).json(dealers);
