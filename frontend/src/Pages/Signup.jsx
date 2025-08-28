@@ -153,60 +153,45 @@ const Signup = () => {
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <form className="space-y-6" onSubmit={handleSubmit}>
             {/* Role Selection */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Account Type
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <label className="relative flex cursor-pointer rounded-lg border border-gray-300 bg-white p-4 shadow-sm focus:outline-none">
-                  <input
-                    type="radio"
-                    name="role"
-                    value="user"
-                    checked={formData.role === 'user'}
-                    onChange={handleInputChange}
-                    className="sr-only"
-                  />
-                  <span className="flex flex-1">
-                    <span className="flex flex-col">
-                      <span className="block text-sm font-medium text-gray-900">Customer</span>
-                      <span className="mt-1 flex items-center text-sm text-gray-500">
-                        Buy auto parts and get support
-                      </span>
-                    </span>
-                  </span>
-                  <span className={`ml-3 flex-shrink-0 ${formData.role === 'user' ? 'text-blue-600' : 'text-gray-400'}`}>
-                    <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                  </span>
-                </label>
 
-                <label className="relative flex cursor-pointer rounded-lg border border-gray-300 bg-white p-4 shadow-sm focus:outline-none">
-                  <input
-                    type="radio"
-                    name="role"
-                    value="dealer"
-                    checked={formData.role === 'dealer'}
-                    onChange={handleInputChange}
-                    className="sr-only"
-                  />
-                  <span className="flex flex-1">
-                    <span className="flex flex-col">
-                      <span className="block text-sm font-medium text-gray-900">Dealer</span>
-                      <span className="mt-1 flex items-center text-sm text-gray-500">
-                        Sell auto parts and manage store
-                      </span>
-                    </span>
-                  </span>
-                  <span className={`ml-3 flex-shrink-0 ${formData.role === 'dealer' ? 'text-blue-600' : 'text-gray-400'}`}>
-                    <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                  </span>
-                </label>
-              </div>
-            </div>
+            <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-2xl">
+  <h3 className="text-center text-lg font-semibold text-gray-800 mb-4">
+    Choose Account Type
+  </h3>
+
+  <div className="grid grid-cols-2 gap-6">
+    {/* User Signup */}
+    <Link to="/user-signup">
+      <div className="relative flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md hover:border-blue-500 transition duration-200 cursor-pointer">
+        <div className="w-12 h-12 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full mb-3">
+          <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M10 10a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 1114 0H3z" />
+          </svg>
+        </div>
+        <span className="block text-sm font-medium text-gray-900">Customer</span>
+        <span className="mt-1 text-center text-xs text-gray-500">
+          Buy auto parts and get support
+        </span>
+      </div>
+    </Link>
+
+    {/* Dealer Signup */}
+    <Link to="/dealer-signup">
+      <div className="relative flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md hover:border-blue-500 transition duration-200 cursor-pointer">
+        <div className="w-12 h-12 flex items-center justify-center bg-green-100 text-green-600 rounded-full mb-3">
+          <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M4 3a2 2 0 00-2 2v1h16V5a2 2 0 00-2-2H4zM2 9h16v6a2 2 0 01-2 2H4a2 2 0 01-2-2V9z" />
+          </svg>
+        </div>
+        <span className="block text-sm font-medium text-gray-900">Dealer</span>
+        <span className="mt-1 text-center text-xs text-gray-500">
+          Sell auto parts and manage store
+        </span>
+      </div>
+    </Link>
+  </div>
+</div>
+
 
             {/* Username */}
             <div>

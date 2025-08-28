@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Building, Mail, Lock, Phone, MapPin, FileText, CreditCard, CheckCircle, AlertCircle } from 'lucide-react';
-
+import axios from 'axios';
 const DealerSignup = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
@@ -160,8 +160,8 @@ const DealerSignup = () => {
       console.log('Dealer signup data:', submitData);
       
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      const response =axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/dealer/register`,submitData)
+      console.log(response)
       // Redirect to dealer dashboard
       navigate('/dealer-dashboard');
       
@@ -655,6 +655,45 @@ const DealerSignup = () => {
           Join AutoPartsHub as a verified dealer and start selling auto parts
         </p>
       </div>
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-2xl">
+  <h3 className="text-center text-lg font-semibold text-gray-800 mb-4">
+    Choose Account Type
+  </h3>
+
+  <div className="grid grid-cols-2 gap-6">
+    {/* User Signup */}
+    <Link to="/user-signup">
+      <div className="relative flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md hover:border-blue-500 transition duration-200 cursor-pointer">
+        <div className="w-12 h-12 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full mb-3">
+          <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M10 10a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 1114 0H3z" />
+          </svg>
+        </div>
+        <span className="block text-sm font-medium text-gray-900">Customer</span>
+        <span className="mt-1 text-center text-xs text-gray-500">
+          Buy auto parts and get support
+        </span>
+      </div>
+    </Link>
+
+    {/* Dealer Signup */}
+    <Link to="/dealer-signup">
+      <div className="relative flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md hover:border-blue-500 transition duration-200 cursor-pointer">
+        <div className="w-12 h-12 flex items-center justify-center bg-green-100 text-green-600 rounded-full mb-3">
+          <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M4 3a2 2 0 00-2 2v1h16V5a2 2 0 00-2-2H4zM2 9h16v6a2 2 0 01-2 2H4a2 2 0 01-2-2V9z" />
+          </svg>
+        </div>
+        <span className="block text-sm font-medium text-gray-900">Dealer</span>
+        <span className="mt-1 text-center text-xs text-gray-500">
+          Sell auto parts and manage store
+        </span>
+      </div>
+    </Link>
+  </div>
+</div>
+
+
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-2xl">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
