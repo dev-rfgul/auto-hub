@@ -16,3 +16,13 @@ export const verifyDealer = async (req, res) => {
   await dealer.save();
   return res.status(200).json({ message: 'Dealer verified successfully' });
 };
+//get all dealers
+export const allDealers=async(req,res)=>{
+  try {
+    const dealers = await Dealer.find();
+    return res.status(200).json(dealers);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+}
