@@ -1,17 +1,11 @@
 import mongoose from 'mongoose';
 const dealerSchema = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    // userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     businessName: { type: String, required: true },
-    businessLicense: { type: String, required: true },
+    // businessLicense: { type: String, required: true },
     taxId: String,
     phone: String,
-    address: {
-      street: String,
-      city: String,
-      state: String,
-      zipCode: String,
-      country: String
-    },
+    address: {type:String,required:true},
     verificationStatus: { 
       type: String, 
       enum: ['pending', 'verified', 'rejected'], 
