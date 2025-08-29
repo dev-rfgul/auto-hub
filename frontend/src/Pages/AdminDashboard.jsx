@@ -139,18 +139,11 @@ const AdminDashboard = () => {
     setActionLoading(id);
     setError(null);
     try {
-      // normalize resource to plural for endpoint but accept either singular/plural from callers
-      const resourcePlural = resource.endsWith("s") ? resource : `${resource}s`;
-      const endpoint = `${base}/api/admin/verify-${resourcePlural}/${id}/${action}`;
-      const res = await fetch(endpoint, {
-        method: "POST",
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error(`Status ${res.status}`);
-
+      const res=await axios.post(`${base}/api/admin/verify-${resource}/${id}/${action}`,{},{withCredentials: true})
+      console.log(res)
       // refetch the affected list so front-end stays in sync
-      if (resourcePlural.includes("dealer")) await fetchDealers();
-      if (resourcePlural.includes("store")) await fetchStores();
+      if (resource.includes("dealer")) await fetchDealers();
+      if (resource.includes("store")) await fetchStores();
     } catch (err) {
       console.error("admin action error", err);
       setError("Action failed; try again");
@@ -407,7 +400,7 @@ const AdminDashboard = () => {
                                 onClick={() =>
                                   performAction({
                                     action: "approved",
-                                    resource: "stores",
+                                    resource: "store",
                                     id: s._id,
                                   })
                                 }
@@ -420,7 +413,7 @@ const AdminDashboard = () => {
                                 onClick={() =>
                                   performAction({
                                     action: "rejected",
-                                    resource: "stores",
+                                    resource: "store",
                                     id: s._id,
                                   })
                                 }

@@ -31,12 +31,14 @@ export const getAllDealers=async(req,res)=>{
 //verify store
 export const verifyStore = async (req, res) => {
   const { storeId, action } = req.params;
+  console.log(req.params)
   const store = await Store.findById(storeId);
   if (!store) {
     return res.status(404).json({ message: 'Store not found' });
   }
-  store.verificationStatus = action;
+  store.approvalStatus = action;
   await store.save();
+  console.log(`Store ${storeId} ${action}d successfully`);
   return res.status(200).json({ message: 'Store verified successfully' });
 };
 //get all stores
