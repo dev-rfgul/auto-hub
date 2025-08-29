@@ -64,7 +64,7 @@ const AdminDashboard = () => {
     setActionLoading(id)
     setError(null)
     try {
-      const endpoint = `${base}/api/admin/${resource}/${id}/${action}`
+      const endpoint = `${base}/api/admin/verify-${resource}/${id}/${action}`
       const res = await fetch(endpoint, { method: 'POST', credentials: 'include' })
       if (!res.ok) throw new Error(`Status ${res.status}`)
 
@@ -130,10 +130,10 @@ const AdminDashboard = () => {
                               <div className="text-sm text-gray-600">{d.phone}</div>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <button disabled={actionLoading === d._id} onClick={() => performAction({ action: 'verified', resource: 'dealers', id: d._id })} className="px-3 py-1 bg-green-600 text-white rounded text-sm">
+                              <button disabled={actionLoading === d._id} onClick={() => performAction({ action: 'verified', resource: 'dealer', id: d._id })} className="px-3 py-1 bg-green-600 text-white rounded text-sm">
                                 {actionLoading === d._id ? '...' : 'Verify'}
                               </button>
-                              <button disabled={actionLoading === d._id} onClick={() => performAction({ action: 'rejected', resource: 'dealers', id: d._id })} className="px-3 py-1 bg-red-600 text-white rounded text-sm">
+                              <button disabled={actionLoading === d._id} onClick={() => performAction({ action: 'rejected', resource: 'dealer', id: d._id })} className="px-3 py-1 bg-red-600 text-white rounded text-sm">
                                 {actionLoading === d._id ? '...' : 'Reject'}
                               </button>
                             </div>
