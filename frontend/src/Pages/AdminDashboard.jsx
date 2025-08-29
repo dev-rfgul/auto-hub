@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react'
-import axios from 'axios' 
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('dealers')
@@ -9,53 +8,69 @@ const AdminDashboard = () => {
   const [actionLoading, setActionLoading] = useState(null)
   const [error, setError] = useState(null)
 
-  useEffect(() => {
-    const base = import.meta.env.VITE_BACKEND_URL || ''
+  const base = import.meta.env.VITE_BACKEND_URL || ''
 
-    const fetchAll = async () => {
-      setLoading(true)
-      try {
-        const [dRes] = await Promise.all([
-          fetch(`${base}/api/admin/getAllDealers`, { credentials: 'include' }),
-        //   fetch(`${base}/api/admin/stores`, { credentials: 'include' })
-        ])
-
-        if (!dRes.ok) throw new Error('Failed to fetch')
-
-        const dData = await dRes.json()
-        console.log(dData)
-        setDealers(dData.dealers || dData || [])
-      } catch (err) {
-        console.warn('admin fetch error', err)
-        setError('Could not load admin data — showing sample data')
-        setDealers([
-          { _id: 'd1', username: 'dealer1', email: 'deal1@example.com', phone: '123', isVerified: false },
-          { _id: 'd2', username: 'dealer2', email: 'deal2@example.com', phone: '456', isVerified: true }
-        ])
-      } finally {
-        setLoading(false)
-      }
+  const fetchDealers = async () => {
+    try {
+      const res = await fetch(`${base}/api/admin/getAllDealers`, { credentials: 'include' })
+      if (!res.ok) throw new Error('Failed to fetch dealers')
+      const data = await res.json()
+      setDealers(data.dealers || data || [])
+    } catch (err) {
+      console.warn('fetchDealers error', err)
+      setError('Could not load dealers. Showing sample data.')
+      setDealers([
+        { _id: 'd1', username: 'dealer1', email: 'deal1@example.com', phone: '123', isVerified: false },
+        { _id: 'd2', username: 'dealer2', email: 'deal2@example.com', phone: '456', isVerified: true }
+      ])
     }
+  }
 
-    fetchAll()
+  const fetchStores = async () => {
+    try {
+      const res = await fetch(`${base}/api/admin/stores`, { credentials: 'include' })
+      if (!res.ok) throw new Error('Failed to fetch stores')
+      const data = await res.json()
+      setStores(data.stores || data || [])
+    } catch (err) {
+      console.warn('fetchStores error', err)
+      setError('Could not load stores. Showing sample data.')
+      setStores([
+        { _id: 's1', businessName: 'Store One', address: '123 Road', verificationStatus: 'pending', dealerId: 'd1' },
+        { _id: 's2', businessName: 'Store Two', address: '456 Ave', verificationStatus: 'verified', dealerId: 'd2' }
+      ])
+    }
+  }
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true)
+      await Promise.all([fetchDealers(), fetchStores()])
+      setLoading(false)
+    }
+    load()
   }, [])
 
+  // helpers to categorize
+  const dealersVerified = dealers.filter(d => d.verificationStatus === 'verified' || d.isVerified === true)
+  const dealersPending = dealers.filter(d => (d.verificationStatus === 'pending' || d.verificationStatus === undefined) && d.isVerified !== true)
+  const dealersRejected = dealers.filter(d => d.verificationStatus === 'rejected')
+
+  const storesVerified = stores.filter(s => s.verificationStatus === 'verified')
+  const storesPending = stores.filter(s => s.verificationStatus === 'pending' || !s.verificationStatus)
+  const storesRejected = stores.filter(s => s.verificationStatus === 'rejected')
+
   const performAction = async ({ action, resource, id }) => {
-    // action: 'verified' | 'rejected', resource: 'dealers' | 'stores'
-    const base = import.meta.env.VITE_BACKEND_URL || ''
     setActionLoading(id)
     setError(null)
     try {
-      const endpoint = `${base}/api/admin/verify-${resource}/${id}/${action}`
+      const endpoint = `${base}/api/admin/${resource}/${id}/${action}`
       const res = await fetch(endpoint, { method: 'POST', credentials: 'include' })
       if (!res.ok) throw new Error(`Status ${res.status}`)
 
-      // optimistic update in UI
-      if (resource === 'dealers') {
-        setDealers((prev) => prev.map((d) => (d._id === id ? { ...d, isVerified: action === 'verified' } : d)))
-      } else {
-        setStores((prev) => prev.map((s) => (s._id === id ? { ...s, verificationStatus: action } : s)))
-      }
+      // refetch the affected list so front-end stays in sync
+      if (resource === 'dealers') await fetchDealers()
+      if (resource === 'stores') await fetchStores()
     } catch (err) {
       console.error('admin action error', err)
       setError('Action failed; try again')
@@ -85,69 +100,152 @@ const AdminDashboard = () => {
           </nav>
 
           {loading ? (
-            <div className="py-8 text-center text-gray-500">Loading...</div>
+            <div className="py-8 text-center text-gray-500 flex items-center justify-center">
+              <div className="inline-flex items-center">
+                <svg className="animate-spin h-6 w-6 text-gray-600 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                Loading admin data...
+              </div>
+            </div>
           ) : (
             <>
               {error && <div className="mb-4 text-sm text-yellow-800 bg-yellow-50 p-3 rounded">{error}</div>}
 
               {activeTab === 'dealers' && (
-                <div className="grid grid-cols-1 gap-4">
-                  {dealers.map((d) => (
-                    <div key={d._id} className="flex items-center justify-between p-4 border rounded">
-                      <div>
-                        <div className="font-medium text-gray-900">{d.name || d.email}</div>
-                        <div className="text-sm text-gray-600">{d.email}</div>
-                        <div className="text-sm text-gray-500">PHONE: {d.phone || '—'}</div>
-                        <div className="text-sm text-gray-500">CNIC: {d.cnic || '—'}</div>
+                <div className="space-y-6">
+                  <section>
+                    <h2 className="text-lg font-semibold text-gray-800 mb-3">Pending Dealers</h2>
+                    {dealersPending.length === 0 ? (
+                      <div className="text-sm text-gray-500">No pending dealers</div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-4">
+                        {dealersPending.map((d) => (
+                          <div key={d._id} className="flex items-center justify-between p-4 border rounded">
+                            <div>
+                              <div className="font-medium text-gray-900">{d.name || d.email}</div>
+                              <div className="text-sm text-gray-600">{d.email}</div>
+                              <div className="text-sm text-gray-600">{d.cnic}</div>
+                              <div className="text-sm text-gray-600">{d.phone}</div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <button disabled={actionLoading === d._id} onClick={() => performAction({ action: 'verified', resource: 'dealers', id: d._id })} className="px-3 py-1 bg-green-600 text-white rounded text-sm">
+                                {actionLoading === d._id ? '...' : 'Verify'}
+                              </button>
+                              <button disabled={actionLoading === d._id} onClick={() => performAction({ action: 'rejected', resource: 'dealers', id: d._id })} className="px-3 py-1 bg-red-600 text-white rounded text-sm">
+                                {actionLoading === d._id ? '...' : 'Reject'}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="text-sm px-2 py-1 rounded text-white" style={{ background: d.isVerified ? '#10b981' : '#f59e0b' }}>
-                          {d.isVerified ? 'Verified' : 'Unverified'}
-                        </div>
+                    )}
+                  </section>
 
-                        {!d.isVerified && (
-                          <>
-                            <button disabled={actionLoading === d._id} onClick={() => performAction({ action: 'verified', resource: 'dealer', id: d._id })} className="px-3 py-1 bg-green-600 text-white rounded text-sm">
-                              Verify
-                            </button>
-                            <button disabled={actionLoading === d._id} onClick={() => performAction({ action: 'rejected', resource: 'dealer', id: d._id })} className="px-3 py-1 bg-red-600 text-white rounded text-sm">
-                              Reject
-                            </button>
-                          </>
-                        )}
+                  <section>
+                    <h2 className="text-lg font-semibold text-gray-800 mb-3">Verified Dealers</h2>
+                    {dealersVerified.length === 0 ? (
+                      <div className="text-sm text-gray-500">No verified dealers</div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-4">
+                        {dealersVerified.map((d) => (
+                          <div key={d._id} className="flex items-center justify-between p-4 border rounded">
+                            <div>
+                              <div className="font-medium text-gray-900">{d.name || d.email}</div>
+                              <div className="text-sm text-gray-600">{d.email}</div> 
+                              <div className="text-sm text-gray-600">{d.cnic}</div> 
+                              <div className="text-sm text-gray-600">{d.phone}</div> 
+                            </div>
+                            <div className="text-sm px-2 py-1 rounded text-white" style={{ background: '#10b981' }}>Verified</div>
+                          </div>
+                        ))}
                       </div>
-                    </div>
-                  ))}
+                    )}
+                  </section>
+
+                  {dealersRejected.length > 0 && (
+                    <section>
+                      <h2 className="text-lg font-semibold text-gray-800 mb-3">Rejected Dealers</h2>
+                      <div className="grid grid-cols-1 gap-4">
+                        {dealersRejected.map((d) => (
+                          <div key={d._id} className="flex items-center justify-between p-4 border rounded">
+                            <div>
+                              <div className="font-medium text-gray-900">{d.username || d.email}</div>
+                              <div className="text-sm text-gray-600">{d.email}</div>
+                            </div>
+                            <div className="text-sm px-2 py-1 rounded text-white" style={{ background: '#ef4444' }}>Rejected</div>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  )}
                 </div>
               )}
 
               {activeTab === 'stores' && (
-                <div className="grid grid-cols-1 gap-4">
-                  {stores.map((s) => (
-                    <div key={s._id} className="flex items-center justify-between p-4 border rounded">
-                      <div>
-                        <div className="font-medium text-gray-900">{s.businessName || s.name}</div>
-                        <div className="text-sm text-gray-600">{s.address || '—'}</div>
-                        <div className="text-sm text-gray-500">Dealer: {s.dealerId || '—'}</div>
+                <div className="space-y-6">
+                  <section>
+                    <h2 className="text-lg font-semibold text-gray-800 mb-3">Pending Stores</h2>
+                    {storesPending.length === 0 ? (
+                      <div className="text-sm text-gray-500">No pending stores</div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-4">
+                        {storesPending.map((s) => (
+                          <div key={s._id} className="flex items-center justify-between p-4 border rounded">
+                            <div>
+                              <div className="font-medium text-gray-900">{s.businessName || s.name}</div>
+                              <div className="text-sm text-gray-600">{s.address || '—'}</div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <button disabled={actionLoading === s._id} onClick={() => performAction({ action: 'verified', resource: 'stores', id: s._id })} className="px-3 py-1 bg-green-600 text-white rounded text-sm">
+                                {actionLoading === s._id ? '...' : 'Verify'}
+                              </button>
+                              <button disabled={actionLoading === s._id} onClick={() => performAction({ action: 'rejected', resource: 'stores', id: s._id })} className="px-3 py-1 bg-red-600 text-white rounded text-sm">
+                                {actionLoading === s._id ? '...' : 'Reject'}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="text-sm px-2 py-1 rounded text-white" style={{ background: s.verificationStatus === 'verified' ? '#10b981' : s.verificationStatus === 'rejected' ? '#ef4444' : '#f59e0b' }}>
-                          {s.verificationStatus || 'pending'}
-                        </div>
+                    )}
+                  </section>
 
-                        {s.verificationStatus !== 'verified' && (
-                          <>
-                            <button disabled={actionLoading === s._id} onClick={() => performAction({ action: 'verified', resource: 'stores', id: s._id })} className="px-3 py-1 bg-green-600 text-white rounded text-sm">
-                              Verify
-                            </button>
-                            <button disabled={actionLoading === s._id} onClick={() => performAction({ action: 'rejected', resource: 'stores', id: s._id })} className="px-3 py-1 bg-red-600 text-white rounded text-sm">
-                              Reject
-                            </button>
-                          </>
-                        )}
+                  <section>
+                    <h2 className="text-lg font-semibold text-gray-800 mb-3">Verified Stores</h2>
+                    {storesVerified.length === 0 ? (
+                      <div className="text-sm text-gray-500">No verified stores</div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-4">
+                        {storesVerified.map((s) => (
+                          <div key={s._id} className="flex items-center justify-between p-4 border rounded">
+                            <div>
+                              <div className="font-medium text-gray-900">{s.businessName || s.name}</div>
+                              <div className="text-sm text-gray-600">{s.address || '—'}</div>
+                            </div>
+                            <div className="text-sm px-2 py-1 rounded text-white" style={{ background: '#10b981' }}>Verified</div>
+                          </div>
+                        ))}
                       </div>
-                    </div>
-                  ))}
+                    )}
+                  </section>
+
+                  {storesRejected.length > 0 && (
+                    <section>
+                      <h2 className="text-lg font-semibold text-gray-800 mb-3">Rejected Stores</h2>
+                      <div className="grid grid-cols-1 gap-4">
+                        {storesRejected.map((s) => (
+                          <div key={s._id} className="flex items-center justify-between p-4 border rounded">
+                            <div>
+                              <div className="font-medium text-gray-900">{s.businessName || s.name}</div>
+                              <div className="text-sm text-gray-600">{s.address || '—'}</div>
+                            </div>
+                            <div className="text-sm px-2 py-1 rounded text-white" style={{ background: '#ef4444' }}>Rejected</div>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  )}
                 </div>
               )}
             </>
