@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import axios from 'axios' 
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('dealers')
@@ -39,21 +40,21 @@ const AdminDashboard = () => {
     fetchAll()
   }, [])
 
-  const performAction = async ({ type, resource, id, value }) => {
-    // type: approve|reject, resource: dealers|stores
+  const performAction = async ({ action, resource, id }) => {
+    // action: 'verified' | 'rejected', resource: 'dealers' | 'stores'
     const base = import.meta.env.VITE_BACKEND_URL || ''
     setActionLoading(id)
     setError(null)
     try {
-      const endpoint = `${base}/api/admin/${resource}/${id}/${type}`
+      const endpoint = `${base}/api/admin/verify-${resource}/${id}/${action}`
       const res = await fetch(endpoint, { method: 'POST', credentials: 'include' })
       if (!res.ok) throw new Error(`Status ${res.status}`)
 
       // optimistic update in UI
       if (resource === 'dealers') {
-        setDealers((prev) => prev.map((d) => (d._id === id ? { ...d, isVerified: type === 'approve' } : d)))
+        setDealers((prev) => prev.map((d) => (d._id === id ? { ...d, isVerified: action === 'verified' } : d)))
       } else {
-        // setStores((prev) => prev.map((s) => (s._id === id ? { ...s, verificationStatus: type === 'approve' ? 'verified' : 'rejected' } : s)))
+        setStores((prev) => prev.map((s) => (s._id === id ? { ...s, verificationStatus: action } : s)))
       }
     } catch (err) {
       console.error('admin action error', err)
@@ -96,7 +97,8 @@ const AdminDashboard = () => {
                       <div>
                         <div className="font-medium text-gray-900">{d.name || d.email}</div>
                         <div className="text-sm text-gray-600">{d.email}</div>
-                        <div className="text-sm text-gray-500">{d.phone || '—'}</div>
+                        <div className="text-sm text-gray-500">PHONE: {d.phone || '—'}</div>
+                        <div className="text-sm text-gray-500">CNIC: {d.cnic || '—'}</div>
                       </div>
                       <div className="flex items-center space-x-2">
                         <div className="text-sm px-2 py-1 rounded text-white" style={{ background: d.isVerified ? '#10b981' : '#f59e0b' }}>
@@ -105,10 +107,10 @@ const AdminDashboard = () => {
 
                         {!d.isVerified && (
                           <>
-                            <button disabled={actionLoading === d._id} onClick={() => performAction({ type: 'approve', resource: 'dealers', id: d._id })} className="px-3 py-1 bg-green-600 text-white rounded text-sm">
-                              Approve
+                            <button disabled={actionLoading === d._id} onClick={() => performAction({ action: 'verified', resource: 'dealer', id: d._id })} className="px-3 py-1 bg-green-600 text-white rounded text-sm">
+                              Verify
                             </button>
-                            <button disabled={actionLoading === d._id} onClick={() => performAction({ type: 'reject', resource: 'dealers', id: d._id })} className="px-3 py-1 bg-red-600 text-white rounded text-sm">
+                            <button disabled={actionLoading === d._id} onClick={() => performAction({ action: 'rejected', resource: 'dealer', id: d._id })} className="px-3 py-1 bg-red-600 text-white rounded text-sm">
                               Reject
                             </button>
                           </>
@@ -135,10 +137,10 @@ const AdminDashboard = () => {
 
                         {s.verificationStatus !== 'verified' && (
                           <>
-                            <button disabled={actionLoading === s._id} onClick={() => performAction({ type: 'approve', resource: 'stores', id: s._id })} className="px-3 py-1 bg-green-600 text-white rounded text-sm">
-                              Approve
+                            <button disabled={actionLoading === s._id} onClick={() => performAction({ action: 'verified', resource: 'stores', id: s._id })} className="px-3 py-1 bg-green-600 text-white rounded text-sm">
+                              Verify
                             </button>
-                            <button disabled={actionLoading === s._id} onClick={() => performAction({ type: 'reject', resource: 'stores', id: s._id })} className="px-3 py-1 bg-red-600 text-white rounded text-sm">
+                            <button disabled={actionLoading === s._id} onClick={() => performAction({ action: 'rejected', resource: 'stores', id: s._id })} className="px-3 py-1 bg-red-600 text-white rounded text-sm">
                               Reject
                             </button>
                           </>
