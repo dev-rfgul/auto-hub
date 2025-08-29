@@ -1,4 +1,3 @@
-import Admin from '../models/admin.model.js';
 import Dealer from '../models/dealer.model.js';
 import Store from '../models/store.model.js';
 
@@ -26,8 +25,7 @@ export const getAllDealers=async(req,res)=>{
     console.error(error);
     return res.status(500).json({ message: 'Server error' });
   }
-}
-
+};
 //verify store
 export const verifyStore = async (req, res) => {
   const { storeId, action } = req.params;

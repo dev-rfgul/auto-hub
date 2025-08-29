@@ -5,6 +5,7 @@ import DealerSignup from './Pages/DealerSignup';
 import AdminDashboard from './Pages/AdminDashboard';
 import { Store } from 'lucide-react';
 import StoreSignup from './Pages/StoreSignup';
+import ProductUpload from './Pages/ProductUpload';
 
 const NavigationHeader = () => {
   const location = useLocation();
@@ -68,6 +69,7 @@ const App = () => {
         <Route path="/user-signup" element={<Signup />} />
         <Route path='/admin-panel' element={<AdminDashboard />} />
         <Route path='/store-signup' element={<StoreSignup />} />
+        <Route path='/product-upload' element={<ProductUpload />} />
         <Route path="/login" element={
           <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Login Page</h1>

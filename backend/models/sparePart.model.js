@@ -20,13 +20,7 @@ const sparePartSchema = new mongoose.Schema({
     storeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Store', required: true },
     dealerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Dealer', required: true },
     status: { type: String, enum: ['active', 'inactive', 'out_of_stock'], default: 'active' },
-    approvalStatus: { 
-      type: String, 
-      enum: ['pending', 'approved', 'rejected'], 
-      default: 'pending' 
-    },
-    approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },
-    approvedAt: Date,
+    storeId:{type:mongoose.Schema.Types.ObjectId,ref:'Store',required:true},
     rating: { type: Number, default: 0 },
     reviewCount: { type: Number, default: 0 },
     createdAt: { type: Date, default: Date.now },
