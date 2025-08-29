@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 
 const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
@@ -58,11 +59,7 @@ const StoreSignup = () => {
 
     try {
       const base = import.meta.env.VITE_BACKEND_URL || ''
-      const url = `${base}/api/dealer/stores`
-
-      const fd = new FormData()
-      fd.append('name', form.name)
-      fd.append('description', form.description)
+      const url = `${base}/api/store/register`
 
       const address = {
         street: form.street,
@@ -71,35 +68,57 @@ const StoreSignup = () => {
         zipCode: form.zipCode,
         country: form.country,
       }
-      fd.append('address', JSON.stringify(address))
 
       const contactInfo = { phone: form.phone, email: form.email, website: form.website }
-      fd.append('contactInfo', JSON.stringify(contactInfo))
-
       const operatingHours = { open: form.open, close: form.close, daysOpen: form.daysOpen }
-      fd.append('operatingHours', JSON.stringify(operatingHours))
 
+      // If no files, send JSON (the current backend registerStore expects JSON in req.body).
+      if (!logo && !banner) {
+        const payload = {
+          dealerId:'68afee688701bd9783e3041f',
+          name: form.name,
+          description: form.description,
+          address,
+          contactInfo,
+          operatingHours
+        }
+
+        const response = await axios.post(url, payload, { withCredentials: true })
+        if (response.status >= 200 && response.status < 300) {
+          navigate('/dealer-dashboard')
+        } else {
+          throw new Error(response.data?.message || `Status ${response.status}`)
+        }
+        return
+      }
+
+      // Otherwise send multipart/form-data (backend must support multipart via multer)
+      const fd = new FormData()
+      fd.append('name', form.name)
+      fd.append('description', form.description)
+      fd.append('address', JSON.stringify(address))
+      fd.append('contactInfo', JSON.stringify(contactInfo))
+      fd.append('operatingHours', JSON.stringify(operatingHours))
       if (logo) fd.append('logo', logo)
       if (banner) fd.append('banner', banner)
 
-      // Assumption: backend will associate store with authenticated dealer (via session/JWT). If API needs dealerId here, adjust accordingly.
-
-      const res = await fetch(url, {
-        method: 'POST',
-        credentials: 'include',
-        body: fd
-      })
-
-      if (!res.ok) {
-        const text = await res.text()
-        throw new Error(text || `Status ${res.status}`)
+      const response = await axios.post(url, fd, { withCredentials: true, headers: { 'Content-Type': 'multipart/form-data' } })
+      if (response.status >= 200 && response.status < 300) {
+        navigate('/dealer-dashboard')
+      } else {
+        throw new Error(response.data?.message || `Status ${response.status}`)
       }
-
-      // success
-      navigate('/dealer-dashboard')
     } catch (err) {
       console.error('store signup error', err)
-      setGeneralError(err.message || 'Failed to create store')
+      // Better axios error handling to surface server message
+      let msg = 'Failed to create store'
+      if (axios.isAxiosError(err)) {
+        // Try to show server-provided error message or raw response body
+        msg = err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response.data : err.message)
+      } else {
+        msg = err.message || msg
+      }
+      setGeneralError(msg)
     } finally {
       setLoading(false)
     }

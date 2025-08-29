@@ -1,5 +1,6 @@
 import Admin from '../models/admin.model.js';
 import Dealer from '../models/dealer.model.js';
+import Store from '../models/store.model.js';
 
 
 //verify dealer
@@ -26,3 +27,15 @@ export const getAllDealers=async(req,res)=>{
     return res.status(500).json({ message: 'Server error' });
   }
 }
+
+//verify store
+export const verifyStore = async (req, res) => {
+  const { storeId, action } = req.params;
+  const store = await Store.findById(storeId);
+  if (!store) {
+    return res.status(404).json({ message: 'Store not found' });
+  }
+  store.verificationStatus = action;
+  await store.save();
+  return res.status(200).json({ message: 'Store verified successfully' });
+};

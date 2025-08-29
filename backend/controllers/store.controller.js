@@ -1,11 +1,13 @@
-import Store from "../models/store.model";
+import Store from "../models/store.model.js";
 
 export const registerStore=async(req,res)=>{
-    const {name,description,address,contactInfo,operatingHours}=req.body;
+    const {name,description,address,contactInfo,operatingHours,dealerId}=req.body;
+    console.log(req.body)
 
     try {
         const store = new Store({
             name,
+            dealerId,
             description,
             address,
             contactInfo,
