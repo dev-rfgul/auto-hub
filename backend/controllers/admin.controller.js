@@ -39,3 +39,13 @@ export const verifyStore = async (req, res) => {
   await store.save();
   return res.status(200).json({ message: 'Store verified successfully' });
 };
+//get all stores
+export const getAllStores = async (req, res) => {
+  try {
+    const stores = await Store.find();
+    return res.status(200).json(stores);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
