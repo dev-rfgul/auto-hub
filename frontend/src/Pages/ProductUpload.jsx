@@ -27,7 +27,7 @@ const ProductUpload = () => {
     price: '',
     originalPrice: '',
     stockQuantity: '',
-    storeId: '',
+    storeId: '68b1303c643ac42101dff757',
     dealerId: '',
   });
   const [images, setImages] = useState([]);
@@ -44,6 +44,13 @@ const ProductUpload = () => {
       return;
     }
     setForm((p) => ({ ...p, [name]: value }));
+  };
+
+  // helper to read cookie by name
+  const getCookie = (name) => {
+    if (typeof document === 'undefined') return undefined;
+    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+    return match ? decodeURIComponent(match[2]) : undefined;
   };
 
   const setCompatibilityAt = (index, value) => {
@@ -96,12 +103,20 @@ const ProductUpload = () => {
   };
 
   const validate = () => {
+    // prefer storeId from cookie (useful for later when store is selected in app)
+    const storeIdFromCookie = getCookie('storeId');
+    const storeIdToUse = storeIdFromCookie || form.storeId;
+
     if (!form.name || !form.partNumber || !form.brand || !form.category) {
       setError('Please fill required fields: name, part number, brand, category');
       return false;
     }
     if (!form.price || Number(form.price) <= 0) {
       setError('Please provide a valid price');
+      return false;
+    }
+    if (!storeIdToUse) {
+      setError('storeId is required (set cookie "storeId" or enter it in the form)');
       return false;
     }
     return true;
@@ -125,7 +140,10 @@ const ProductUpload = () => {
       if (form.price) data.append('price', String(form.price));
       if (form.originalPrice) data.append('originalPrice', String(form.originalPrice));
       if (form.stockQuantity) data.append('stockQuantity', String(form.stockQuantity));
-      if (form.storeId) data.append('storeId', form.storeId);
+  // Prefer storeId stored in cookie (cookie name: 'storeId'). If not present, fall back to the form input.
+  const storeIdFromCookie = getCookie('storeId');
+  const storeIdToSend = storeIdFromCookie || form.storeId;
+  if (storeIdToSend) data.append('storeId', storeIdToSend);
       if (form.dealerId) data.append('dealerId', form.dealerId);
 
       // specifications: send as JSON string

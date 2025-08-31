@@ -1,67 +1,106 @@
 import SparePart from "../models/sparePart.model.js";
 import cloudinary from '../config/cloudinary.js';
+import streamifier from 'streamifier';
 
 const uploadImgsToCloudinary = async (files) => {
-    try {
-        const uploadPromises = files.map(file =>
-            cloudinary.uploader.upload(file.path)
-        );
-        const results = await Promise.all(uploadPromises);
-        return results.map(result => result.secure_url);
-    } catch (error) {
-        console.error('Error uploading images:', error);
+  // Upload files sequentially (not in parallel) to reduce connection/timeouts on Cloudinary
+  try {
+    const list = Array.isArray(files) ? files : [files];
+    const urls = [];
+
+    for (const file of list) {
+      try {
+        console.log(`uploading file to cloudinary: name=${file.originalname || file.name} size=${file.size || (file.buffer && file.buffer.length)}`);
+
+        // if multer stored file on disk
+        if (file.path) {
+          const result = await cloudinary.uploader.upload(file.path, { folder: 'auto-hub/spareparts' });
+          urls.push(result.secure_url || result.url);
+          continue;
+        }
+
+        // if memory buffer, stream it
+        if (file.buffer) {
+          const result = await new Promise((resolve, reject) => {
+            const uploadStream = cloudinary.uploader.upload_stream({ folder: 'auto-hub/spareparts' }, (err, result) => {
+              if (err) return reject(err);
+              resolve(result);
+            });
+            streamifier.createReadStream(file.buffer).pipe(uploadStream);
+          });
+          urls.push(result.secure_url || result.url);
+          continue;
+        }
+
+        console.warn('Skipping file without path or buffer');
+      } catch (fileErr) {
+        console.error('file upload failed, continuing with next file', fileErr);
+        // continue with next file rather than failing all
+      }
     }
+
+    return urls;
+  } catch (error) {
+    console.error('Error uploading images:', error);
+    return [];
+  }
 };
 
 export const addSparePart = async (req, res) => {
   try {
-    // log incoming payload for debugging
-    console.log('addSparePart - req.body:', req.body);
-    console.log('addSparePart - req.files:', req.files);
+  // log incoming payload and headers for debugging
+  console.log('addSparePart - headers content-type:', req.headers['content-type']);
+  console.log('addSparePart - is multipart:', req.is && req.is('multipart/form-data'));
+  console.log('addSparePart - req.body:', req.body);
+  console.log('addSparePart - req.files:', req.files);
+
+    // guard for missing body (e.g., when multipart not parsed)
+    const body = req.body || {};
 
     // parse specifications if provided as JSON string
     let specifications = {};
-    if (req.body.specifications) {
+    if (body.specifications) {
       try {
-        specifications = typeof req.body.specifications === 'string'
-          ? JSON.parse(req.body.specifications)
-          : req.body.specifications;
+        specifications = typeof body.specifications === 'string'
+          ? JSON.parse(body.specifications)
+          : body.specifications;
       } catch (e) {
         console.warn('could not parse specifications JSON, using raw value');
-        specifications = req.body.specifications;
+        specifications = body.specifications;
       }
     }
 
     // upload files to Cloudinary (if any)
-    const images = [];
+    // upload files to Cloudinary (if any)
+    let images = [];
     if (req.files && req.files.length > 0) {
-      for (const file of req.files) {
-        try {
-          const result = await uploadImgsToCloudinary(file);
-          // store secure_url; you can also save public_id if you need to delete later
-          images.push(result.secure_url || result.url);
-        } catch (err) {
-          console.error('Cloudinary upload failed for file', file.originalname, err);
-        }
-      }
+      const urls = await uploadImgsToCloudinary(req.files);
+      images = urls;
     }
 
     // build document payload
     const payload = {
-      name: req.body.name,
-      partNumber: req.body.partNumber,
-      brand: req.body.brand,
-      category: req.body.category,
-      subcategory: req.body.subcategory,
-      description: req.body.description,
+      name: body.name,
+      partNumber: body.partNumber,
+      brand: body.brand,
+      category: body.category,
+      subcategory: body.subcategory,
+      description: body.description,
       specifications,
       images,
-      price: req.body.price ? Number(req.body.price) : undefined,
-      originalPrice: req.body.originalPrice ? Number(req.body.originalPrice) : undefined,
-      stockQuantity: req.body.stockQuantity ? Number(req.body.stockQuantity) : undefined,
-      storeId: req.body.storeId,
-      dealerId: req.body.dealerId,
+      price: body.price ? Number(body.price) : undefined,
+      originalPrice: body.originalPrice ? Number(body.originalPrice) : undefined,
+      stockQuantity: body.stockQuantity ? Number(body.stockQuantity) : undefined,
+      // take storeId from incoming body; if empty string, treat as undefined
+      storeId: body.storeId || undefined,
+      dealerId: body.dealerId || undefined,
     };
+
+    // validate required relational fields
+    if (!payload.storeId) {
+      console.warn('storeId missing in payload:', body);
+      return res.status(400).json({ message: 'storeId is required' });
+    }
 
     const newSparePart = new SparePart(payload);
     await newSparePart.save();

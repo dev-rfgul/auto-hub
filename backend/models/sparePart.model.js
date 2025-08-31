@@ -18,7 +18,7 @@ const sparePartSchema = new mongoose.Schema({
     originalPrice: Number,
     stockQuantity: { type: Number, required: true, min: 0 },
     storeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Store', required: true },
-    dealerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Dealer', required: true },
+    // dealerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Dealer', required: true },
     status: { type: String, enum: ['active', 'inactive', 'out_of_stock'], default: 'active' },
     storeId:{type:mongoose.Schema.Types.ObjectId,ref:'Store',required:true},
     rating: { type: Number, default: 0 },
