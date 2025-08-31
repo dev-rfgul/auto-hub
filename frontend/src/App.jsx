@@ -3,9 +3,9 @@ import { Routes, Route, Link, useLocation } from 'react-router-dom'
 import Signup from './Pages/Signup'
 import DealerSignup from './Pages/DealerSignup';
 import AdminDashboard from './Pages/AdminDashboard';
-import { Store } from 'lucide-react';
 import StoreSignup from './Pages/StoreSignup';
 import ProductUpload from './Pages/ProductUpload';
+import LoginUser from './Pages/LoginUser';
 
 const NavigationHeader = () => {
   const location = useLocation();
@@ -70,15 +70,7 @@ const App = () => {
         <Route path='/admin-panel' element={<AdminDashboard />} />
         <Route path='/store-signup' element={<StoreSignup />} />
         <Route path='/product-upload' element={<ProductUpload />} />
-        <Route path="/login" element={
-          <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Login Page</h1>
-            <p className="text-gray-600">Login functionality coming soon...</p>
-            <Link to="/user-signup" className="mt-4 text-blue-600 hover:text-blue-500">
-              Don't have an account? Sign up
-            </Link>
-          </div>
-        } />
+        <Route path='/login' element={<LoginUser />} />
         <Route path="/dealer-dashboard" element={
           <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Dealer Dashboard</h1>

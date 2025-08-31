@@ -72,11 +72,10 @@ export const loginUser = async (req, res) => {
       sameSite: 'lax',
       maxAge: 30 * 24 * 60 * 60 * 1000, 
     };
-    res.cookie('userId', user._id.toString(), cookieOptions);
-    res.cookie('role', user.role || 'user', { ...cookieOptions, httpOnly: false });
 
     const userSafe = user.toObject();
     delete userSafe.password;
+    res.cookie('user', JSON.stringify(userSafe), cookieOptions);
 
     return res.status(200).json(userSafe);
   } catch (err) {
