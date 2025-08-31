@@ -1,3 +1,5 @@
+import bcrypt from 'bcrypt';
+
 import Dealer from "../models/dealer.model.js";
 import Store from "../models/store.model.js";
 import Admin from "../models/admin.model.js";
@@ -61,10 +63,54 @@ export const createAdmin = async (req, res) => {
 
   try {
     // Create new admin
-    const newAdmin = await Admin.create({ username, email, password });
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newAdmin = await Admin.create({ username, email, password: hashedPassword });
+    res.cookie('admin', newAdmin.toString(), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    });
     return res.status(201).json(newAdmin);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Server error" });
   }
 };
+
+//login admin
+export const loginAdmin = async (req, res) =>{
+  const { email, password } = req.body;
+
+  // Basic validation
+  if (!email || !password) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
+  try {
+    // Check if admin exists
+    const admin = await Admin.findOne({ email });
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    // Check password
+    const isMatch = await bcrypt.compare(password, admin.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    // Set cookie
+    res.cookie('admin', admin.toString(), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    });
+
+    return res.status(200).json(admin);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+}
