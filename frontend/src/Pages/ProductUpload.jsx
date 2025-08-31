@@ -1,10 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-// ProductUpload form for SparePart (frontend)
-// Assumptions:
-// - Backend POST endpoint: `${VITE_BACKEND_URL}/api/spareparts` accepts multipart/form-data
-// - If your backend uses a different path, change `endpoint` variable accordingly.
 
 const ProductUpload = () => {
   const base = import.meta.env.VITE_BACKEND_URL || '';
