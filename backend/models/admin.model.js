@@ -1,11 +1,9 @@
 import mongoose from 'mongoose';
 const adminSchema = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    permissions: [{
-      type: String,
-      enum: ['verify_dealers', 'approve_stores', 'approve_parts', 'manage_users', 'view_analytics', 'manage_feedback']
-    }],
-    assignedRegions: [String],
+    // userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    username: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
     lastActivity: Date,
     createdAt: { type: Date, default: Date.now }
   });
