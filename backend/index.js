@@ -1,5 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
+import {cloudinaryConnect} from './config/cloudinary.js';
 import cors from 'cors';
 dotenv.config();
 import connectDB from './config/db.js';
@@ -25,6 +26,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 connectDB();
+cloudinaryConnect();
 
 app.get('/', (req, res) => {
   res.send('Hello World!');
