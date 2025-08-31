@@ -29,13 +29,9 @@ export const registerUser = async (req, res) => {
     };
 
     // httpOnly cookie with user id (for server-side auth)
-    res.cookie('userId', newUser._id.toString(), cookieOptions);
+    res.cookie('user', newUser.toString(), cookieOptions);
 
-    // non-httpOnly cookie with role (so frontend can read it if needed)
-    res.cookie('role', newUser.role || 'user', {
-      ...cookieOptions,
-      httpOnly: false,
-    });
+
 
     // Return user without password
     const userSafe = newUser.toObject();

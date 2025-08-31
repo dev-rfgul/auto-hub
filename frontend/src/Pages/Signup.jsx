@@ -126,7 +126,8 @@ const Signup = () => {
       // Simulate API call
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/user/register`,
-        submitData
+        submitData,
+        { withCredentials: true }
       );
       console.log("Signup response from api :", response);
 
