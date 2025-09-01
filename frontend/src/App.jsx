@@ -1,72 +1,58 @@
-import { useEffect } from "react";
-import { Routes, Route, Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Routes, Route, useNavigate } from "react-router-dom";
 import Cookie from "js-cookie";
 import Navbar from "./components/Navbar";
 import Signup from "./Pages/Signup";
-import DealerSignup from "./Pages/DealerSignup";
 import AdminDashboard from "./Pages/AdminDashboard";
 import StoreSignup from "./Pages/StoreSignup";
 import ProductUpload from "./Pages/ProductUpload";
 import LoginUser from "./Pages/LoginUser";
+import DealerHome from "./Pages/DealerHome";
+
 
 const App = () => {
-  //extract role from the cookies
+  const [role, setRole] = useState(null);
+  const navigate = useNavigate();
+
+  // Extract role from the cookies and route automatically
   useEffect(() => {
-    // const userValue = JSON.parse(Cookie.get("user"));
-    // console.log("User cookie:", userValue);
-    // console.log("role",userValue?.role);
-  }, []);
+    const userCookie = Cookie.get("user");
+    let user = null;
+    try {
+      user = userCookie ? JSON.parse(userCookie) : null;
+    } catch (e) {
+      user = null;
+    }
+    setRole(user?.role);
+
+    // Auto-route after login/signup
+    if (user?.role === "admin") {
+      navigate("/admin-panel", { replace: true });
+    } else if (user?.role === "dealer") {
+      navigate("/dealer-dashboard", { replace: true });
+    } else if (user?.role === "user") {
+      navigate("/", { replace: true });
+    }
+  }, [navigate]);
+
   return (
     <div className="app">
       <Navbar />
       <Routes>
-        <Route
-          path="/"
-          element={
-            <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
-              <h1 className="text-4xl font-bold text-blue-600 mb-4">
-                AutoPartsHub
-              </h1>
-              <p className="text-gray-600 mb-8">
-                Your one-stop shop for auto parts
-              </p>
-              <div className="space-x-4">
-                <Link
-                  to="/user-signup"
-                  className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700"
-                >
-                  Get Started
-                </Link>
-                <Link
-                  to="/login"
-                  className="border border-blue-600 text-blue-600 px-6 py-2 rounded-md hover:bg-blue-50"
-                >
-                  Sign In
-                </Link>
-              </div>
-            </div>
-          }
-        />
+        {role === "admin" && (
+          <>
+            <Route path="/admin-panel" element={<AdminDashboard />} />
+            <Route path="/store-signup" element={<StoreSignup />} />
+            <Route path="/product-upload" element={<ProductUpload />} />
+          </>
+        )}
+        {role === "dealer" && (
+          <>
+            <Route path="/dealer-dashboard" element={<DealerHome />} />
+          </>
+        )}
         <Route path="/user-signup" element={<Signup />} />
-        <Route path="/admin-panel" element={<AdminDashboard />} />
-        <Route path="/store-signup" element={<StoreSignup />} />
-        <Route path="/product-upload" element={<ProductUpload />} />
         <Route path="/login" element={<LoginUser />} />
-        <Route
-          path="/dealer-dashboard"
-          element={
-            <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
-              <h1 className="text-2xl font-bold text-gray-900 mb-4">
-                Dealer Dashboard
-              </h1>
-              <p className="text-gray-600">Welcome to your dealer dashboard!</p>
-              <Link to="/" className="mt-4 text-blue-600 hover:text-blue-500">
-                Back to Home
-              </Link>
-            </div>
-          }
-        />
-        <Route path="/dealer-signup" element={<DealerSignup />} />
       </Routes>
     </div>
   );
