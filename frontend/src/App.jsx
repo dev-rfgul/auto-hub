@@ -12,8 +12,9 @@ import LoginUser from "./Pages/LoginUser";
 const App = () => {
   //extract role from the cookies
   useEffect(() => {
-    const userValue = Cookie.get("user");
+    const userValue = JSON.parse(Cookie.get("user"));
     console.log("User cookie:", userValue);
+    console.log("role",userValue?.role);
   }, []);
   return (
     <div className="app">
