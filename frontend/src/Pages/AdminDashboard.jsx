@@ -50,6 +50,7 @@ const AdminDashboard = () => {
       });
       if (!res.ok) throw new Error("Failed to fetch dealers");
       const data = await res.json();
+      console.log(data)
       setDealers(data.dealers || data || []);
     } catch (err) {
       console.warn("fetchDealers error", err);
@@ -114,18 +115,18 @@ const AdminDashboard = () => {
     load();
   }, []);
 
-  // helpers to categorize
+  // helpers to categorize (dealer fields are nested under d.dealer)
   const dealersVerified = dealers.filter(
-    (d) => d.verificationStatus === "verified" || d.isVerified === true
+    (d) => d.dealer?.verificationStatus === "verified" || d.isVerified === true
   );
   const dealersPending = dealers.filter(
     (d) =>
-      (d.verificationStatus === "pending" ||
-        d.verificationStatus === undefined) &&
+      (d.dealer?.verificationStatus === "pending" ||
+        d.dealer?.verificationStatus === undefined) &&
       d.isVerified !== true
   );
   const dealersRejected = dealers.filter(
-    (d) => d.verificationStatus === "rejected"
+    (d) => d.dealer?.verificationStatus === "rejected"
   );
 
   // backend returns `approvalStatus` for stores (pending|approved|rejected)
@@ -243,13 +244,13 @@ const AdminDashboard = () => {
                           >
                             <div>
                               <div className="font-medium text-gray-900">
-                                {d.name || d.email}
+                                {d.dealer?.name || d.email}
                               </div>
                               <div className="text-sm text-gray-600">
                                 {d.email}
                               </div>
                               <div className="text-sm text-gray-600">
-                                {d.cnic}
+                                {d.dealer?.cnic}
                               </div>
                               <div className="text-sm text-gray-600">
                                 {d.phone}
@@ -306,13 +307,13 @@ const AdminDashboard = () => {
                           >
                             <div>
                               <div className="font-medium text-gray-900">
-                                {d.name || d.email}
+                                {d.dealer?.name || d.email}
                               </div>
                               <div className="text-sm text-gray-600">
                                 {d.email}
                               </div>
                               <div className="text-sm text-gray-600">
-                                {d.cnic}
+                                {d.dealer?.cnic}
                               </div>
                               <div className="text-sm text-gray-600">
                                 {d.phone}
@@ -343,7 +344,7 @@ const AdminDashboard = () => {
                           >
                             <div>
                               <div className="font-medium text-gray-900">
-                                {d.username || d.email}
+                                {d.dealer?.name || d.email}
                               </div>
                               <div className="text-sm text-gray-600">
                                 {d.email}

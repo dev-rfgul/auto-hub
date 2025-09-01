@@ -3,25 +3,26 @@ import bcrypt from 'bcrypt';
 import Dealer from "../models/dealer.model.js";
 import Store from "../models/store.model.js";
 import Admin from "../models/admin.model.js";
+import User from "../models/user.model.js";
 
 //verify dealer
 export const verifyDealer = async (req, res) => {
   console.log(req.params);
   const { dealerId, action } = req.params;
   console.log(dealerId);
-  const dealer = await Dealer.findById(dealerId);
-  console.log(dealer);
+  const dealer = await User.findById(dealerId);
+  console.log("dealer from ln:14  ", dealer);
   if (!dealer) {
     return res.status(404).json({ message: "Dealer not found" });
   }
-  dealer.verificationStatus = action;
+  dealer.dealer.verificationStatus = action;
   await dealer.save();
   return res.status(200).json({ message: "Dealer verified successfully" });
 };
 //get all dealers
 export const getAllDealers = async (req, res) => {
   try {
-    const dealers = await Dealer.find();
+    const dealers = await User.find({ role: "dealer" });
     return res.status(200).json(dealers);
   } catch (error) {
     console.error(error);

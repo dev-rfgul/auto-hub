@@ -13,7 +13,6 @@ const userSchema = new mongoose.Schema({
     country:  String
   },
   role: { type: String, enum: ['user', 'dealer', 'admin'], default: 'user' },
-  isVerified: { type: Boolean, default: false },
   createdAt:  { type: Date, default: Date.now },
   lastLogin:  Date,
 
