@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt';
 
 export const registerUser = async (req, res) => {
   try {
-    const { username, email, password, role, address, phone } = req.body || {};
+    const { username, email, password, role, address, phone, dealer, admin } = req.body || {};
 
     // basic validation
     if (!username || !email || !password) {
@@ -14,6 +14,16 @@ export const registerUser = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const userObj = { username, email, password: hashedPassword, role, address, phone };
+
+    // Add dealer-specific fields if role is dealer
+    if (role === 'dealer' && dealer) {
+      userObj.dealer = dealer; // dealer should be an object with dealer fields
+    }
+
+    // Add admin-specific fields if role is admin
+    if (role === 'admin' && admin) {
+      userObj.admin = admin; // admin should be an object with admin fields
+    }
 
     const newUser = await User.create(userObj);
     if (!newUser) {
