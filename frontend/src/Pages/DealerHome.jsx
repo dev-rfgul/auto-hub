@@ -65,22 +65,8 @@ const DealerHome = () => {
         setStores(data.stores || data || []);
       } catch (err) {
         console.warn("Could not fetch stores:", err);
-        setError("Unable to load stores from the server. Showing sample data.");
-        // graceful fallback so the UI remains useful during early development
-        setStores([
-          {
-            _id: "sample-1",
-            businessName: "Sample Store A",
-            address: "123 Main St",
-            verificationStatus: "verified",
-          },
-          {
-            _id: "sample-2",
-            businessName: "Sample Store B",
-            address: "456 Market Rd",
-            verificationStatus: "pending",
-          },
-        ]);
+  setError("Unable to load stores from the server.");
+  setStores([]);
       } finally {
         setLoading(false);
       }
@@ -177,51 +163,62 @@ const DealerHome = () => {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                {stores.map((s) => (
-                  <div
-                    key={s._id}
-                    className="bg-white p-4 rounded-lg shadow-sm border"
+                {stores.length === 0 ? (
+                  <Link
+                    to="/store-signup"
+                    className="bg-white p-8 rounded-lg shadow-sm border flex flex-col items-center justify-center hover:bg-blue-50 cursor-pointer"
                   >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="text-md font-medium text-gray-900">
-                          {s.businessName || s.name || "Untitled Store"}
-                        </h3>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {s.address || "No address provided"}
-                        </p>
-                        <p className="mt-3 text-sm">
-                          <span
-                            className="inline-block px-2 py-1 text-xs font-medium rounded-full mr-2"
-                            style={{
-                              background:
-                                s.verificationStatus === "verified"
-                                  ? "#ecfdf5"
-                                  : "#fff7ed",
-                            }}
-                          >
-                            {s.verificationStatus || "pending"}
-                          </span>
-                        </p>
-                      </div>
+                    <span className="text-4xl mb-2 text-blue-600">+</span>
+                    <span className="font-semibold text-blue-700">Create Store</span>
+                    <span className="text-sm text-gray-500 mt-2">No stores found. Click to register your first store.</span>
+                  </Link>
+                ) : (
+                  stores.map((s) => (
+                    <div
+                      key={s._id}
+                      className="bg-white p-4 rounded-lg shadow-sm border"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="text-md font-medium text-gray-900">
+                            {s.businessName || s.name || "Untitled Store"}
+                          </h3>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {s.address || "No address provided"}
+                          </p>
+                          <p className="mt-3 text-sm">
+                            <span
+                              className="inline-block px-2 py-1 text-xs font-medium rounded-full mr-2"
+                              style={{
+                                background:
+                                  s.verificationStatus === "verified"
+                                    ? "#ecfdf5"
+                                    : "#fff7ed",
+                              }}
+                            >
+                              {s.verificationStatus || "pending"}
+                            </span>
+                          </p>
+                        </div>
 
-                      <div className="flex-shrink-0 ml-4">
-                        <Link
-                          to={`/dealer/stores/${s._id}`}
-                          className="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
-                        >
-                          View
-                        </Link>
-                        <Link
-                          to={`/dealer/stores/${s._id}/edit`}
-                          className="ml-2 inline-flex items-center px-2 py-2 border rounded-md text-sm text-gray-700 hover:bg-gray-50"
-                        >
-                          Edit
-                        </Link>
+                        <div className="flex-shrink-0 ml-4">
+                          <Link
+                            to={`/dealer/stores/${s._id}`}
+                            className="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
+                          >
+                            View
+                          </Link>
+                          <Link
+                            to={`/dealer/stores/${s._id}/edit`}
+                            className="ml-2 inline-flex items-center px-2 py-2 border rounded-md text-sm text-gray-700 hover:bg-gray-50"
+                          >
+                            Edit
+                          </Link>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </>
           )}

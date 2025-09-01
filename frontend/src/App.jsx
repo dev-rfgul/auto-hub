@@ -9,9 +9,9 @@ import ProductUpload from "./Pages/ProductUpload";
 import LoginUser from "./Pages/LoginUser";
 import DealerHome from "./Pages/DealerHome";
 
-
 const App = () => {
   const [role, setRole] = useState(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   // Extract role from the cookies and route automatically
@@ -24,16 +24,21 @@ const App = () => {
       user = null;
     }
     setRole(user?.role);
+    setLoading(false);
 
-    // Auto-route after login/signup
-    if (user?.role === "admin") {
+    // Only auto-route if coming from login or signup
+    if (user?.role === "admin" && ["/login", "/user-signup"].includes(location.pathname)) {
       navigate("/admin-panel", { replace: true });
-    } else if (user?.role === "dealer") {
+    } else if (user?.role === "dealer" && ["/login", "/user-signup"].includes(location.pathname)) {
       navigate("/dealer-dashboard", { replace: true });
-    } else if (user?.role === "user") {
+    } else if (user?.role === "user" && ["/login", "/user-signup"].includes(location.pathname)) {
       navigate("/", { replace: true });
     }
-  }, [navigate]);
+  }, [navigate, location]);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="app">
@@ -42,12 +47,12 @@ const App = () => {
         {role === "admin" && (
           <>
             <Route path="/admin-panel" element={<AdminDashboard />} />
-            <Route path="/store-signup" element={<StoreSignup />} />
             <Route path="/product-upload" element={<ProductUpload />} />
           </>
         )}
         {role === "dealer" && (
           <>
+            <Route path="/store-signup" element={<StoreSignup />} />
             <Route path="/dealer-dashboard" element={<DealerHome />} />
           </>
         )}
