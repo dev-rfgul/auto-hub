@@ -1,11 +1,14 @@
 import React, { useState } from 'react'
 import axios from 'axios'
+import Cookie from 'js-cookie'
 import { useNavigate } from 'react-router-dom'
 
 const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
 
 const StoreSignup = () => {
-  const navigate = useNavigate()
+  const userCookie = JSON.parse(Cookie.get("user"));
+  console.log("cookie from StoreSignup:", userCookie);
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     name: '',
     description: '',
@@ -72,11 +75,10 @@ const StoreSignup = () => {
       const contactInfo = { phone: form.phone, email: form.email, website: form.website }
       const operatingHours = { open: form.open, close: form.close, daysOpen: form.daysOpen }
 
-      // If no files, send JSON (the current backend registerStore expects JSON in req.body).
       if (!logo && !banner) {
         const payload = {
-          dealerId:'68afee688701bd9783e3041f',
           name: form.name,
+          dealerId: userCookie?._id,
           description: form.description,
           address,
           contactInfo,
@@ -101,8 +103,9 @@ const StoreSignup = () => {
       fd.append('operatingHours', JSON.stringify(operatingHours))
       if (logo) fd.append('logo', logo)
       if (banner) fd.append('banner', banner)
-
+      console.log(fd)
       const response = await axios.post(url, fd, { withCredentials: true, headers: { 'Content-Type': 'multipart/form-data' } })
+      console.log(response)
       if (response.status >= 200 && response.status < 300) {
         navigate('/dealer-dashboard')
       } else {

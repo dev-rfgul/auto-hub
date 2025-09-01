@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Routes, Route, useNavigate } from "react-router-dom";
+import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import Cookie from "js-cookie";
 import Navbar from "./components/Navbar";
 import Signup from "./Pages/Signup";
@@ -12,7 +12,9 @@ import DealerHome from "./Pages/DealerHome";
 const App = () => {
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [hasRedirected, setHasRedirected] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Extract role from the cookies and route automatically
   useEffect(() => {
@@ -20,21 +22,27 @@ const App = () => {
     let user = null;
     try {
       user = userCookie ? JSON.parse(userCookie) : null;
+      console.log("User from cookie:", user);
     } catch (e) {
       user = null;
     }
-    setRole(user?.role);
+
+    setRole(user?.role ?? null);
     setLoading(false);
 
-    // Only auto-route if coming from login or signup
-    if (user?.role === "admin" && ["/login", "/user-signup"].includes(location.pathname)) {
-      navigate("/admin-panel", { replace: true });
-    } else if (user?.role === "dealer" && ["/login", "/user-signup"].includes(location.pathname)) {
-      navigate("/dealer-dashboard", { replace: true });
-    } else if (user?.role === "user" && ["/login", "/user-signup"].includes(location.pathname)) {
-      navigate("/", { replace: true });
+    // Auto-redirect based on role, but only once per session
+    if (user && user.role && !hasRedirected) {
+      setHasRedirected(true);
+      
+      if (user.role === "admin") {
+        navigate("/admin-panel", { replace: true });
+      } else if (user.role === "dealer") {
+        navigate("/dealer-dashboard", { replace: true });
+      } else if (user.role === "user") {
+        navigate("/", { replace: true });
+      }
     }
-  }, [navigate, location]);
+  }, [navigate, hasRedirected]);
 
   if (loading) {
     return <div>Loading...</div>;
