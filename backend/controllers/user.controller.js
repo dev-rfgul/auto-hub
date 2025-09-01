@@ -93,3 +93,18 @@ export const loginUser = async (req, res) => {
     return res.status(500).json({ message: 'Login error', error: err.message || err });
   }
 };
+
+export const getUser=async(req,res)=>{
+  try {
+    const userId = req.params.id;
+    console.log('Fetching user with ID:', userId);
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    return res.status(200).json(user);
+  } catch (err) {
+    console.error('getUser error', err);
+    return res.status(500).json({ message: 'Error fetching user', error: err.message || err });
+  }
+}
