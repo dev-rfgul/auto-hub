@@ -1,44 +1,46 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  Eye,
-  EyeOff,
-  User,
-  Mail,
-  Lock,
-  Phone,
-  MapPin,
-  Building,
-} from "lucide-react";
+import { Eye, EyeOff, User, Mail, Lock, Phone, MapPin, Building } from "lucide-react";
 import axios from "axios";
 
 const Signup = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [selectedType, setSelectedType] = useState("user");
   const [formData, setFormData] = useState({
     username: "",
     email: "",
     password: "",
     confirmPassword: "",
     phone: "",
-    role: "user",
     address: "",
     // Dealer fields
     dealer: {
       name: "",
       cnic: "",
     },
-    // Admin fields
-    admin: {
-      permissions: "",
-      assignedRegions: "",
-    },
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
 
-  // Helper to handle nested fields
+  // Card switch handler
+  const handleTypeSelect = (type) => {
+    setSelectedType(type);
+    setErrors({});
+    setFormData((prev) => ({
+      ...prev,
+      username: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      phone: "",
+      address: "",
+      dealer: { name: "", cnic: "" },
+    }));
+  };
+
+  // Input handler
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     if (name.startsWith("dealer.")) {
@@ -47,15 +49,6 @@ const Signup = () => {
         ...prev,
         dealer: {
           ...prev.dealer,
-          [field]: value,
-        },
-      }));
-    } else if (name.startsWith("admin.")) {
-      const field = name.split(".")[1];
-      setFormData((prev) => ({
-        ...prev,
-        admin: {
-          ...prev.admin,
           [field]: value,
         },
       }));
@@ -70,6 +63,7 @@ const Signup = () => {
     }
   };
 
+  // Validation
   const validateForm = () => {
     const newErrors = {};
 
@@ -105,7 +99,7 @@ const Signup = () => {
     }
 
     // Dealer validation
-    if (formData.role === "dealer") {
+    if (selectedType === "dealer") {
       if (!formData.dealer.name.trim()) {
         newErrors["dealer.name"] = "Dealer name is required";
       }
@@ -114,20 +108,11 @@ const Signup = () => {
       }
     }
 
-    // Admin validation
-    if (formData.role === "admin") {
-      if (!formData.admin.permissions.trim()) {
-        newErrors["admin.permissions"] = "Permissions are required";
-      }
-      if (!formData.admin.assignedRegions.trim()) {
-        newErrors["admin.assignedRegions"] = "Assigned regions are required";
-      }
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
+  // Submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -135,29 +120,19 @@ const Signup = () => {
 
     try {
       // Prepare data for submission
-      const submitData = {  
+      const submitData = {
         username: formData.username,
         email: formData.email,
         password: formData.password,
         phone: formData.phone,
-        role: formData.role,
         address: formData.address,
+        role: selectedType,
       };
 
-      if (formData.role === "dealer") {
+      if (selectedType === "dealer") {
         submitData.dealer = {
           name: formData.dealer.name,
           cnic: formData.dealer.cnic,
-        };
-      }
-      if (formData.role === "admin") {
-        submitData.admin = {
-          permissions: formData.admin.permissions.split(",").map((s) =>
-            s.trim()
-          ),
-          assignedRegions: formData.admin.assignedRegions.split(",").map((s) =>
-            s.trim()
-          ),
         };
       }
 
@@ -167,10 +142,8 @@ const Signup = () => {
         { withCredentials: true }
       );
 
-      if (formData.role === "dealer") {
+      if (selectedType === "dealer") {
         navigate("/dealer-dashboard");
-      } else if (formData.role === "admin") {
-        navigate("/admin-dashboard");
       } else {
         navigate("/");
       }
@@ -184,12 +157,35 @@ const Signup = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center">
-          <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center">
-            <Building className="w-8 h-8 text-white" />
-          </div>
+        <div className="flex justify-center gap-6 mb-6">
+          {/* User Card */}
+          <button
+            type="button"
+            className={`w-32 h-20 rounded-lg shadow flex flex-col items-center justify-center border-2 ${
+              selectedType === "user"
+                ? "border-blue-600 bg-blue-50"
+                : "border-gray-300 bg-white"
+            }`}
+            onClick={() => handleTypeSelect("user")}
+          >
+            <User className="h-8 w-8 mb-1 text-blue-600" />
+            <span className="font-semibold text-blue-700">Customer</span>
+          </button>
+          {/* Dealer Card */}
+          <button
+            type="button"
+            className={`w-32 h-20 rounded-lg shadow flex flex-col items-center justify-center border-2 ${
+              selectedType === "dealer"
+                ? "border-green-600 bg-green-50"
+                : "border-gray-300 bg-white"
+            }`}
+            onClick={() => handleTypeSelect("dealer")}
+          >
+            <Building className="h-8 w-8 mb-1 text-green-600" />
+            <span className="font-semibold text-green-700">Dealer</span>
+          </button>
         </div>
-        <h2 className="mt-6 text-center text-3xl font-bold text-gray-900">
+        <h2 className="text-center text-3xl font-bold text-gray-900">
           Create your account
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
@@ -206,29 +202,9 @@ const Signup = () => {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <form className="space-y-6" onSubmit={handleSubmit}>
-            {/* Role Selection */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Account Type
-              </label>
-              <select
-                name="role"
-                value={formData.role}
-                onChange={handleInputChange}
-                className="mt-1 block w-full border rounded p-2"
-              >
-                <option value="user">Customer</option>
-                <option value="dealer">Dealer</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-
             {/* Username */}
             <div>
-              <label
-                htmlFor="username"
-                className="block text-sm font-medium text-gray-700"
-              >
+              <label className="block text-sm font-medium text-gray-700">
                 Username
               </label>
               <div className="mt-1 relative">
@@ -236,7 +212,6 @@ const Signup = () => {
                   <User className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  id="username"
                   name="username"
                   type="text"
                   required
@@ -255,10 +230,7 @@ const Signup = () => {
 
             {/* Email */}
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
-              >
+              <label className="block text-sm font-medium text-gray-700">
                 Email address
               </label>
               <div className="mt-1 relative">
@@ -266,7 +238,6 @@ const Signup = () => {
                   <Mail className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  id="email"
                   name="email"
                   type="email"
                   autoComplete="email"
@@ -286,10 +257,7 @@ const Signup = () => {
 
             {/* Password */}
             <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700"
-              >
+              <label className="block text-sm font-medium text-gray-700">
                 Password
               </label>
               <div className="mt-1 relative">
@@ -297,7 +265,6 @@ const Signup = () => {
                   <Lock className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  id="password"
                   name="password"
                   type={showPassword ? "text" : "password"}
                   autoComplete="new-password"
@@ -328,10 +295,7 @@ const Signup = () => {
 
             {/* Confirm Password */}
             <div>
-              <label
-                htmlFor="confirmPassword"
-                className="block text-sm font-medium text-gray-700"
-              >
+              <label className="block text-sm font-medium text-gray-700">
                 Confirm Password
               </label>
               <div className="mt-1 relative">
@@ -339,7 +303,6 @@ const Signup = () => {
                   <Lock className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  id="confirmPassword"
                   name="confirmPassword"
                   type={showConfirmPassword ? "text" : "password"}
                   autoComplete="new-password"
@@ -374,10 +337,7 @@ const Signup = () => {
 
             {/* Phone */}
             <div>
-              <label
-                htmlFor="phone"
-                className="block text-sm font-medium text-gray-700"
-              >
+              <label className="block text-sm font-medium text-gray-700">
                 Phone Number (Optional)
               </label>
               <div className="mt-1 relative">
@@ -385,7 +345,6 @@ const Signup = () => {
                   <Phone className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  id="phone"
                   name="phone"
                   type="tel"
                   autoComplete="tel"
@@ -410,10 +369,7 @@ const Signup = () => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {/* Street */}
                 <div className="sm:col-span-2">
-                  <label
-                    htmlFor="street"
-                    className="block text-sm font-medium text-gray-700"
-                  >
+                  <label className="block text-sm font-medium text-gray-700">
                     Street Address
                   </label>
                   <div className="mt-1 relative">
@@ -421,7 +377,6 @@ const Signup = () => {
                       <MapPin className="h-5 w-5 text-gray-400" />
                     </div>
                     <input
-                      id="street"
                       name="address"
                       type="text"
                       value={formData.address}
@@ -435,7 +390,7 @@ const Signup = () => {
             </div>
 
             {/* Dealer Fields */}
-            {formData.role === "dealer" && (
+            {selectedType === "dealer" && (
               <>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
@@ -470,48 +425,6 @@ const Signup = () => {
                   {errors["dealer.cnic"] && (
                     <p className="mt-2 text-sm text-red-600">
                       {errors["dealer.cnic"]}
-                    </p>
-                  )}
-                </div>
-              </>
-            )}
-
-            {/* Admin Fields */}
-            {formData.role === "admin" && (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Permissions (comma separated)
-                  </label>
-                  <input
-                    name="admin.permissions"
-                    type="text"
-                    value={formData.admin.permissions}
-                    onChange={handleInputChange}
-                    className="mt-1 block w-full border rounded p-2"
-                    placeholder="e.g. manage_users,approve_stores"
-                  />
-                  {errors["admin.permissions"] && (
-                    <p className="mt-2 text-sm text-red-600">
-                      {errors["admin.permissions"]}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Assigned Regions (comma separated)
-                  </label>
-                  <input
-                    name="admin.assignedRegions"
-                    type="text"
-                    value={formData.admin.assignedRegions}
-                    onChange={handleInputChange}
-                    className="mt-1 block w-full border rounded p-2"
-                    placeholder="e.g. lahore,islamabad"
-                  />
-                  {errors["admin.assignedRegions"] && (
-                    <p className="mt-2 text-sm text-red-600">
-                      {errors["admin.assignedRegions"]}
                     </p>
                   )}
                 </div>
