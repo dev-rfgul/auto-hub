@@ -9,7 +9,6 @@ import {
   Phone,
   MapPin,
   Building,
-  
 } from "lucide-react";
 import axios from "axios";
 
@@ -25,19 +24,39 @@ const Signup = () => {
     phone: "",
     role: "user",
     address: "",
+    // Dealer fields
+    dealer: {
+      name: "",
+      cnic: "",
+    },
+    // Admin fields
+    admin: {
+      permissions: "",
+      assignedRegions: "",
+    },
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
 
+  // Helper to handle nested fields
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    if (name.includes(".")) {
-      const [parent, child] = name.split(".");
+    if (name.startsWith("dealer.")) {
+      const field = name.split(".")[1];
       setFormData((prev) => ({
         ...prev,
-        [parent]: {
-          ...prev[parent],
-          [child]: value,
+        dealer: {
+          ...prev.dealer,
+          [field]: value,
+        },
+      }));
+    } else if (name.startsWith("admin.")) {
+      const field = name.split(".")[1];
+      setFormData((prev) => ({
+        ...prev,
+        admin: {
+          ...prev.admin,
+          [field]: value,
         },
       }));
     } else {
@@ -46,7 +65,6 @@ const Signup = () => {
         [name]: value,
       }));
     }
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
@@ -55,35 +73,30 @@ const Signup = () => {
   const validateForm = () => {
     const newErrors = {};
 
-    // Username validation
     if (!formData.username.trim()) {
       newErrors.username = "Username is required";
     } else if (formData.username.length < 3) {
       newErrors.username = "Username must be at least 3 characters";
     }
 
-    // Email validation
     if (!formData.email.trim()) {
       newErrors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = "Please enter a valid email address";
     }
 
-    // Password validation
     if (!formData.password) {
       newErrors.password = "Password is required";
     } else if (formData.password.length < 6) {
       newErrors.password = "Password must be at least 6 characters";
     }
 
-    // Confirm password validation
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = "Please confirm your password";
     } else if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = "Passwords do not match";
     }
 
-    // Phone validation
     if (
       formData.phone &&
       !/^[+]?[1-9][\d]{0,15}$/.test(formData.phone.replace(/\s/g, ""))
@@ -91,27 +104,38 @@ const Signup = () => {
       newErrors.phone = "Please enter a valid phone number";
     }
 
-    // Address validation (optional - no validation needed)
-    // Removed the incorrect validation that was setting error for provided addresses
+    // Dealer validation
+    if (formData.role === "dealer") {
+      if (!formData.dealer.name.trim()) {
+        newErrors["dealer.name"] = "Dealer name is required";
+      }
+      if (!formData.dealer.cnic.trim()) {
+        newErrors["dealer.cnic"] = "Dealer CNIC is required";
+      }
+    }
+
+    // Admin validation
+    if (formData.role === "admin") {
+      if (!formData.admin.permissions.trim()) {
+        newErrors["admin.permissions"] = "Permissions are required";
+      }
+      if (!formData.admin.assignedRegions.trim()) {
+        newErrors["admin.assignedRegions"] = "Assigned regions are required";
+      }
+    }
 
     setErrors(newErrors);
-    console.log("Validation errors:", newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
-    console.log("handle submit clicked");
     e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
-
+    if (!validateForm()) return;
     setIsLoading(true);
 
     try {
-      // Prepare data for submission (remove confirmPassword)
-      const submitData = {
+      // Prepare data for submission
+      const submitData = {  
         username: formData.username,
         email: formData.email,
         password: formData.password,
@@ -120,25 +144,37 @@ const Signup = () => {
         address: formData.address,
       };
 
-      // API call would go here
-      console.log("Signup data:", submitData);
+      if (formData.role === "dealer") {
+        submitData.dealer = {
+          name: formData.dealer.name,
+          cnic: formData.dealer.cnic,
+        };
+      }
+      if (formData.role === "admin") {
+        submitData.admin = {
+          permissions: formData.admin.permissions.split(",").map((s) =>
+            s.trim()
+          ),
+          assignedRegions: formData.admin.assignedRegions.split(",").map((s) =>
+            s.trim()
+          ),
+        };
+      }
 
-      // Simulate API call
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/user/register`,
         submitData,
         { withCredentials: true }
       );
-      console.log("Signup response from api :", response);
 
-      // Redirect based on role
       if (formData.role === "dealer") {
         navigate("/dealer-dashboard");
+      } else if (formData.role === "admin") {
+        navigate("/admin-dashboard");
       } else {
         navigate("/");
       }
     } catch (error) {
-      console.error("Signup error:", error);
       setErrors({ general: "Something went wrong. Please try again." });
     } finally {
       setIsLoading(false);
@@ -171,55 +207,20 @@ const Signup = () => {
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <form className="space-y-6" onSubmit={handleSubmit}>
             {/* Role Selection */}
-
-            <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-2xl">
-              <h3 className="text-center text-lg font-semibold text-gray-800 mb-4">
-                Choose Account Type
-              </h3>
-
-              <div className="grid grid-cols-2 gap-6">
-                {/* User Signup */}
-                <Link to="/user-signup">
-                  <div className="relative flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md hover:border-blue-500 transition duration-200 cursor-pointer">
-                    <div className="w-12 h-12 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full mb-3">
-                      <svg
-                        className="h-6 w-6"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path d="M10 10a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 1114 0H3z" />
-                      </svg>
-                    </div>
-                    <span className="block text-sm font-medium text-gray-900">
-                      Customer
-                    </span>
-                    <span className="mt-1 text-center text-xs text-gray-500">
-                      Buy auto parts and get support
-                    </span>
-                  </div>
-                </Link>
-
-                {/* Dealer Signup */}
-                <Link to="/dealer-signup">
-                  <div className="relative flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md hover:border-blue-500 transition duration-200 cursor-pointer">
-                    <div className="w-12 h-12 flex items-center justify-center bg-green-100 text-green-600 rounded-full mb-3">
-                      <svg
-                        className="h-6 w-6"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path d="M4 3a2 2 0 00-2 2v1h16V5a2 2 0 00-2-2H4zM2 9h16v6a2 2 0 01-2 2H4a2 2 0 01-2-2V9z" />
-                      </svg>
-                    </div>
-                    <span className="block text-sm font-medium text-gray-900">
-                      Dealer
-                    </span>
-                    <span className="mt-1 text-center text-xs text-gray-500">
-                      Sell auto parts and manage store
-                    </span>
-                  </div>
-                </Link>
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Account Type
+              </label>
+              <select
+                name="role"
+                value={formData.role}
+                onChange={handleInputChange}
+                className="mt-1 block w-full border rounded p-2"
+              >
+                <option value="user">Customer</option>
+                <option value="dealer">Dealer</option>
+                <option value="admin">Admin</option>
+              </select>
             </div>
 
             {/* Username */}
@@ -432,6 +433,90 @@ const Signup = () => {
                 </div>
               </div>
             </div>
+
+            {/* Dealer Fields */}
+            {formData.role === "dealer" && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Dealer Name
+                  </label>
+                  <input
+                    name="dealer.name"
+                    type="text"
+                    value={formData.dealer.name}
+                    onChange={handleInputChange}
+                    className="mt-1 block w-full border rounded p-2"
+                    placeholder="Enter dealer name"
+                  />
+                  {errors["dealer.name"] && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {errors["dealer.name"]}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Dealer CNIC
+                  </label>
+                  <input
+                    name="dealer.cnic"
+                    type="text"
+                    value={formData.dealer.cnic}
+                    onChange={handleInputChange}
+                    className="mt-1 block w-full border rounded p-2"
+                    placeholder="Enter dealer CNIC"
+                  />
+                  {errors["dealer.cnic"] && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {errors["dealer.cnic"]}
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* Admin Fields */}
+            {formData.role === "admin" && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Permissions (comma separated)
+                  </label>
+                  <input
+                    name="admin.permissions"
+                    type="text"
+                    value={formData.admin.permissions}
+                    onChange={handleInputChange}
+                    className="mt-1 block w-full border rounded p-2"
+                    placeholder="e.g. manage_users,approve_stores"
+                  />
+                  {errors["admin.permissions"] && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {errors["admin.permissions"]}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Assigned Regions (comma separated)
+                  </label>
+                  <input
+                    name="admin.assignedRegions"
+                    type="text"
+                    value={formData.admin.assignedRegions}
+                    onChange={handleInputChange}
+                    className="mt-1 block w-full border rounded p-2"
+                    placeholder="e.g. lahore,islamabad"
+                  />
+                  {errors["admin.assignedRegions"] && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {errors["admin.assignedRegions"]}
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
 
             {/* General Error */}
             {errors.general && (
