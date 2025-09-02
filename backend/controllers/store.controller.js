@@ -46,8 +46,9 @@ export const getStoreById=async (req,res)=>{
   }
 }
 
-export const getProductByStore=async(req,res)=>{
+export const getProductsByStoreId=async(req,res)=>{
   const storeId=req.params.id;
+  console.log(storeId)
   try {
     const products = await SparePart.find({ storeId });
     res.status(200).json(products);

@@ -55,10 +55,12 @@ const StoreHome = () => {
 
         // Try to fetch products for the store. backend route may vary so we try a couple patterns
         try {
-          const pRes = await fetch(`${base}/api/store/${id}/products`, { credentials: 'include' });
+          const pRes = await fetch(`${base}/api/store/getProductsByStoreId/${id}`, { credentials: 'include' });
           if (pRes.ok) {
             const pData = await pRes.json();
             const pList = pData.products || pData || [];
+            console.log(pList);
+            console.log(pData)
             setProducts(pList.length ? pList : dummyProducts);
           } else {
             // fallback to dummy
