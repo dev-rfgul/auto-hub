@@ -1,5 +1,6 @@
 import Store from "../models/store.model.js";
 import User from "../models/user.model.js";
+import SparePart from "../models/sparePart.model.js";
 
 export const registerStore = async (req, res) => {
   const { name, description, address, contactInfo, operatingHours, dealerId } = req.body;
@@ -41,6 +42,17 @@ export const getStoreById=async (req,res)=>{
     res.status(200).json(store);
   } catch (error) {
     console.error("Error fetching store:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+export const getProductByStore=async(req,res)=>{
+  const storeId=req.params.id;
+  try {
+    const products = await SparePart.find({ storeId });
+    res.status(200).json(products);
+  } catch (error) {
+    console.error("Error fetching products:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 }
