@@ -9,6 +9,14 @@ const DealerHome = () => {
   const [error, setError] = useState(null);
   const [dealer, setDealer] = useState(null);
 
+  // Helper to render address which may be a string or an object
+  const formatAddress = (address) => {
+    if (!address) return null;
+    if (typeof address === "string") return address;
+    const parts = [address.street, address.city, address.state, address.zipCode, address.country].filter(Boolean);
+    return parts.join(", ");
+  };
+
   useEffect(() => {
     // Always fetch latest user data from backend to get updated dealer status
     const fetchLatestUser = async () => {
@@ -48,32 +56,52 @@ const DealerHome = () => {
     fetchLatestUser();
   }, []);
   useEffect(() => {
+    // Wait until dealer object is loaded
+    if (!dealer || !dealer.dealer) {
+      setLoading(false);
+      return;
+    }
+
+    const storeIds = dealer.dealer.stores || [];
+    if (!storeIds || storeIds.length === 0) {
+      // No stores to fetch
+      setStores([]);
+      setLoading(false);
+      return;
+    }
+
+    // Normalize to string ids (handle case where stores may be populated objects)
+    const ids = storeIds.map((s) => (typeof s === "string" ? s : s?._id));
+
     const fetchStores = async () => {
       try {
         const base = import.meta.env.VITE_BACKEND_URL || "";
-        // Backend endpoint expectation: GET /api/dealer/stores or similar
-        const res = await fetch(`${base}/api/dealer/stores`, {
-          credentials: "include",
-        });
 
-        if (!res.ok) {
-          throw new Error(`Status ${res.status}`);
-        }
+        // Fetch each store by id. Backend should expose GET /api/dealer/getStoreById/:id
+        const promises = ids.map((id) =>
+          fetch(`${base}/api/store/getStoreById/${id}`, { credentials: "include" })
+            .then((r) => {
+              if (!r.ok) throw new Error(`Status ${r.status}`);
+              return r.json();
+            })
+        );
 
-        const data = await res.json();
-        // backend may return { stores: [...] } or an array directly
-        setStores(data.stores || data || []);
+        const results = await Promise.all(promises);
+
+        // Normalize results: API may return store object directly or { store }
+        const normalized = results.map((res) => res.store || res || null).filter(Boolean);
+        setStores(normalized);
       } catch (err) {
         console.warn("Could not fetch stores:", err);
-  setError("Unable to load stores from the server.");
-  setStores([]);
+        setError("Unable to load stores from the server.");
+        setStores([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchStores();
-  }, []);
+  }, [dealer]);
 
   // Conditional rendering
   if (!dealer || !dealer.dealer) {
@@ -184,7 +212,7 @@ const DealerHome = () => {
                             {s.businessName || s.name || "Untitled Store"}
                           </h3>
                           <p className="text-sm text-gray-600 mt-1">
-                            {s.address || "No address provided"}
+                            {formatAddress(s.address) || "No address provided"}
                           </p>
                           <p className="mt-3 text-sm">
                             <span
