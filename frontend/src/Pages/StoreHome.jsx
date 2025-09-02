@@ -58,10 +58,8 @@ const StoreHome = () => {
           const pRes = await fetch(`${base}/api/store/getProductsByStoreId/${id}`, { credentials: 'include' });
           if (pRes.ok) {
             const pData = await pRes.json();
-            const pList = pData.products || pData || [];
-            console.log(pList);
             console.log(pData)
-            setProducts(pList.length ? pList : dummyProducts);
+            setProducts(pData);
           } else {
             // fallback to dummy
             setProducts(dummyProducts);
@@ -167,7 +165,7 @@ const StoreHome = () => {
             {products.map((p) => (
               <div key={p._id} className="bg-white rounded-lg shadow-sm overflow-hidden">
                 <div className="w-full h-40 bg-gray-100 flex items-center justify-center overflow-hidden">
-                  {p.image ? <img src={p.image} alt={p.name} className="w-full h-full object-cover" /> : <div className="text-gray-400">No image</div>}
+                  {p.images[0] ? <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover" /> : <div className="text-gray-400">No image</div>}
                 </div>
                 <div className="p-4">
                   <h3 className="text-sm font-medium text-gray-900 truncate">{p.name}</h3>
