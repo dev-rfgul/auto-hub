@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-
+import { useParams, useLocation } from 'react-router-dom';
 
 const ProductUpload = () => {
   const base = import.meta.env.VITE_BACKEND_URL || '';
   const endpoint = `${base}/api/product/add-spare-part`;
+
+  // store id from path (e.g. /product-upload/:id) or query ?storeId=
+  const { id: storeId } = useParams();
+  console.log('storeIdFromPath:', storeId );
 
   const [form, setForm] = useState({
     name: '',
@@ -23,15 +27,13 @@ const ProductUpload = () => {
     price: '',
     originalPrice: '',
     stockQuantity: '',
-    storeId: '68b1303c643ac42101dff757',
-    dealerId: '',
+    storeId: storeId,
   });
   const [images, setImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-
   const onChange = (e) => {
     const { name, value } = e.target;
     if (name.startsWith('spec_')) {
@@ -42,12 +44,6 @@ const ProductUpload = () => {
     setForm((p) => ({ ...p, [name]: value }));
   };
 
-  // helper to read cookie by name
-  const getCookie = (name) => {
-    if (typeof document === 'undefined') return undefined;
-    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-    return match ? decodeURIComponent(match[2]) : undefined;
-  };
 
   const setCompatibilityAt = (index, value) => {
     setForm((p) => {
@@ -99,10 +95,6 @@ const ProductUpload = () => {
   };
 
   const validate = () => {
-    // prefer storeId from cookie (useful for later when store is selected in app)
-    const storeIdFromCookie = getCookie('storeId');
-    const storeIdToUse = storeIdFromCookie || form.storeId;
-
     if (!form.name || !form.partNumber || !form.brand || !form.category) {
       setError('Please fill required fields: name, part number, brand, category');
       return false;
@@ -111,10 +103,7 @@ const ProductUpload = () => {
       setError('Please provide a valid price');
       return false;
     }
-    if (!storeIdToUse) {
-      setError('storeId is required (set cookie "storeId" or enter it in the form)');
-      return false;
-    }
+
     return true;
   };
 
@@ -136,11 +125,6 @@ const ProductUpload = () => {
       if (form.price) data.append('price', String(form.price));
       if (form.originalPrice) data.append('originalPrice', String(form.originalPrice));
       if (form.stockQuantity) data.append('stockQuantity', String(form.stockQuantity));
-  // Prefer storeId stored in cookie (cookie name: 'storeId'). If not present, fall back to the form input.
-  const storeIdFromCookie = getCookie('storeId');
-  const storeIdToSend = storeIdFromCookie || form.storeId;
-  if (storeIdToSend) data.append('storeId', storeIdToSend);
-      if (form.dealerId) data.append('dealerId', form.dealerId);
 
       // specifications: send as JSON string
       data.append('specifications', JSON.stringify(form.specifications || {}));
@@ -149,6 +133,8 @@ const ProductUpload = () => {
       images.forEach((file, idx) => {
         data.append('images', file);
       });
+  // include storeId from path (line 10) or fallback to form.storeId
+  data.append('storeId', storeId || form.storeId || '');
       // developer-friendly FormData inspection
       console.log('FormData entries:', [...data.entries()].map(([k, v]) => [k, v instanceof File ? v.name : v]));
       console.log('FormData images (file names):', data.getAll('images').map((f) => f.name));
@@ -204,7 +190,7 @@ const ProductUpload = () => {
         price: '',
         originalPrice: '',
         stockQuantity: '',
-        storeId: '',
+  storeId: storeId || queryStoreId || '',
         dealerId: '',
       });
       setImages([]);
