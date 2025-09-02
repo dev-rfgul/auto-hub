@@ -205,8 +205,7 @@ const DealerHome = () => {
                           <div className="flex-shrink-0 w-36 text-right">
                             {isApproved ? (
                               <div className="flex flex-col items-end space-y-2">
-                                <Link to={`/dealer/stores/${s._id}`} className="w-full inline-flex justify-center items-center px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700">View</Link>
-                                <Link to={`/dealer/stores/${s._id}/edit`} className="w-full inline-flex justify-center items-center px-3 py-2 border rounded-md text-sm text-gray-700 hover:bg-gray-50">Edit</Link>
+                                <Link to={`/dealer/store/${s._id}`} className="w-full inline-flex justify-center items-center px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700">View</Link>
                               </div>
                             ) : isRejected ? (
                               <div className="flex flex-col items-end space-y-2">

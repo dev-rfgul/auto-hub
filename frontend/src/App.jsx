@@ -8,6 +8,7 @@ import StoreSignup from "./Pages/StoreSignup";
 import ProductUpload from "./Pages/ProductUpload";
 import LoginUser from "./Pages/LoginUser";
 import DealerHome from "./Pages/DealerHome";
+import StoreHome from "./Pages/StoreHome";
 
 const App = () => {
   const [role, setRole] = useState(null);
@@ -62,6 +63,8 @@ const App = () => {
           <>
             <Route path="/store-signup" element={<StoreSignup />} />
             <Route path="/dealer-dashboard" element={<DealerHome />} />
+            <Route path="/dealer/store/:id" element={<StoreHome />} />
+            <Route path="/product-upload/:id" element={<ProductUpload />} />
           </>
         )}
         <Route path="/user-signup" element={<Signup />} />
