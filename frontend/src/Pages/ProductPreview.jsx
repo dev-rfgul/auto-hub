@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 
 
-const PlaceholderImages = ({ images = [] }) => {
+const PlaceholderImages = ({ images = [], onThumbnailClick = () => {} }) => {
   if (!images || images.length === 0) {
     return (
       <div className="w-full h-64 bg-gray-100 flex items-center justify-center rounded">
@@ -14,7 +14,9 @@ const PlaceholderImages = ({ images = [] }) => {
   return (
     <div className="grid grid-cols-4 gap-2">
       {images.slice(0, 4).map((src, i) => (
-        <img key={i} src={src} alt={`img-${i}`} className="h-24 w-full object-cover rounded" />
+        <button key={i} type="button" onClick={() => onThumbnailClick(src)} className="overflow-hidden rounded">
+          <img src={src} alt={`img-${i}`} className="h-24 w-full object-cover rounded cursor-pointer hover:opacity-90" />
+        </button>
       ))}
     </div>
   );
@@ -31,8 +33,10 @@ const ProductPreview = ({ product: initialProduct = null }) => {
   const { id } = useParams();
   console.log(id)
   const [product, setProduct] = useState(initialProduct);
+  const [selectedImage, setSelectedImage] = useState((initialProduct && initialProduct.images && initialProduct.images[0]) || null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     if (product || !id) return;
@@ -42,6 +46,9 @@ const ProductPreview = ({ product: initialProduct = null }) => {
         const base = import.meta.env.VITE_BACKEND_URL || '';
         const res = await axios.get(`${base}/api/spareParts/getSparePartById/${id}`);
         setProduct(res.data);
+          if (res.data && res.data.images && res.data.images.length > 0) {
+            setSelectedImage(res.data.images[0]);
+          }
       } catch (err) {
         setError('Failed to load product');
       } finally {
@@ -77,6 +84,11 @@ const ProductPreview = ({ product: initialProduct = null }) => {
   };
 
   const p = product || demo;
+  useEffect(() => {
+    if (!selectedImage && p && p.images && p.images.length > 0) {
+      setSelectedImage(p.images[0]);
+    }
+  }, [p, selectedImage]);
 
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-6">
@@ -84,11 +96,13 @@ const ProductPreview = ({ product: initialProduct = null }) => {
         {/* left column: images */}
         <div className="md:w-1/2">
           <div className="rounded overflow-hidden">
-            <img src={(p.images && p.images[0]) || '/vite.svg'} alt={p.name} className="w-full h-64 object-cover rounded" />
+            <button type="button" onClick={() => setShowModal(true)} className="w-full block">
+              <img src={selectedImage || (p.images && p.images[0]) || '/vite.svg'} alt={p.name} className="w-full h-64 object-cover rounded" />
+            </button>
           </div>
 
           <div className="mt-3">
-            <PlaceholderImages images={p.images} />
+            <PlaceholderImages images={p.images} onThumbnailClick={(src) => setSelectedImage(src)} />
           </div>
         </div>
 
@@ -164,8 +178,27 @@ const ProductPreview = ({ product: initialProduct = null }) => {
         </div>
       </div>
 
-      {/* small footer note */}
-      <div className="mt-4 text-xs text-gray-500">Preview UI based on DESIGN_INSTRUCTIONS.md • Mobile-first responsive</div>
+      {/* Image modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60" onClick={() => setShowModal(false)}>
+          <div className="relative max-w-3xl max-h-[90vh] p-4" onClick={(e) => e.stopPropagation()}>
+            <button className="absolute top-2 right-2 text-white bg-black bg-opacity-30 rounded-full p-1" onClick={() => setShowModal(false)}>✕</button>
+            <img src={selectedImage || (p.images && p.images[0]) || '/vite.svg'} alt={p.name} className="max-w-full max-h-[80vh] rounded" />
+            {p.images && p.images.length > 1 && (
+              <div className="mt-3 grid grid-cols-6 gap-2">
+                {p.images.map((src, i) => (
+                  <button key={i} type="button" onClick={() => setSelectedImage(src)} className="overflow-hidden rounded">
+                    <img src={src} alt={`modal-thumb-${i}`} className="h-16 w-full object-cover rounded cursor-pointer" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+        {/* small footer note */}
+        <div className="mt-4 text-xs text-gray-500">Preview UI based on DESIGN_INSTRUCTIONS.md • Mobile-first responsive</div>
     </div>
   );
 };
