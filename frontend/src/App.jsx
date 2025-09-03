@@ -54,8 +54,8 @@ const App = () => {
   return (
     <div className="app">
       <Navbar />
-      <Home />
       <Routes>
+        <Route path='/' element={<Home />} />
         {role === "admin" && (
           <>
             <Route path="/admin-panel" element={<AdminDashboard />} />
