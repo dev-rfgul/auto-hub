@@ -1,4 +1,4 @@
-import SparePart from "../models/sparePart.model";
+import SparePart from "../models/sparePart.model.js";
 
 
 //get all spareparts

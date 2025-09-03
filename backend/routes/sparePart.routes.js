@@ -1,5 +1,5 @@
 import express from 'express';
-import { getAllSpareParts,getSparePartById } from '../controllers/sparePart.controlller';
+import { getAllSpareParts,getSparePartById } from '../controllers/sparePart.controlller.js';
 
 const router = express.Router();
 
