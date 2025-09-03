@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 3000;
 
 // add cors and cors options
 const corsOptions = {
-  origin: ['http://localhost:5173','http://localhost:5174','https://auto-hub-stjr.vercel.app/'],
+  origin: ['http://localhost:5173','http://localhost:5174','https://auto-hub-stjr.vercel.app'],
   credentials: true,
 };
 app.use(cookieParser());
