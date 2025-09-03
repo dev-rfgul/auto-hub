@@ -29,6 +29,7 @@ const SpecRow = ({ name, value }) => (
 
 const ProductPreview = ({ product: initialProduct = null }) => {
   const { id } = useParams();
+  console.log(id)
   const [product, setProduct] = useState(initialProduct);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -39,7 +40,7 @@ const ProductPreview = ({ product: initialProduct = null }) => {
       setLoading(true);
       try {
         const base = import.meta.env.VITE_BACKEND_URL || '';
-        const res = await axios.get(`${base}/api/product/get/${id}`);
+        const res = await axios.get(`${base}/api/spareParts/getSparePartById/${id}`);
         setProduct(res.data);
       } catch (err) {
         setError('Failed to load product');
