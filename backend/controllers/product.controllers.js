@@ -1,6 +1,7 @@
 import SparePart from "../models/sparePart.model.js";
 import cloudinary from '../config/cloudinary.js';
 import streamifier from 'streamifier';
+import Store from "../models/store.model.js";
 
 const uploadImgsToCloudinary = async (files) => {
   // Upload files sequentially (not in parallel) to reduce connection/timeouts on Cloudinary
@@ -102,8 +103,19 @@ export const addSparePart = async (req, res) => {
       return res.status(400).json({ message: 'storeId is required' });
     }
 
+
     const newSparePart = new SparePart(payload);
     await newSparePart.save();
+        // add product Id to the store as well
+    if (payload.storeId) {
+      const store = await Store.findById(payload.storeId);
+      if (!store) {
+        console.warn('store not found for id:', payload.storeId);
+        return res.status(404).json({ message: 'Store not found' });
+      }
+      store.sparePartsId.push(newSparePart._id);
+      await store.save();
+    }
     res.status(201).json(newSparePart);
   } catch (error) {
     console.error('addSparePart error', error);

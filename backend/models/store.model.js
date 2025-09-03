@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 const storeSchema = new mongoose.Schema({
     name: { type: String, required: true },
     dealerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Dealer', required: true },
+    sparePartsId: [{ type: mongoose.Schema.Types.ObjectId, ref: 'SparePart' }],
     description: String,
     logo: String,
     banner: String,
