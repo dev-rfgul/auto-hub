@@ -1,30 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import Cookie from 'js-cookie';
 
-const dummyProducts = [
-  {
-    _id: 'd1',
-    name: 'Premium Brake Pads',
-    price: 49.99,
-    image: '/vite.svg',
-    short: 'High-performance ceramic brake pads for reliable stopping power.',
-  },
-  {
-    _id: 'd2',
-    name: 'Alloy Wheel (17")',
-    price: 129.99,
-    image: '/vite.svg',
-    short: 'Lightweight 17-inch alloy wheel with modern design.',
-  },
-  {
-    _id: 'd3',
-    name: 'Engine Oil 5W-30 (4L)',
-    price: 34.5,
-    image: '/vite.svg',
-    short: 'Fully synthetic engine oil for extended engine life.',
-  },
-];
 
 const formatAddress = (address) => {
   if (!address) return null;
@@ -163,19 +139,20 @@ const StoreHome = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {products.map((p) => (
-              <div key={p._id} className="bg-white rounded-lg shadow-sm overflow-hidden">
-                <div className="w-full h-40 bg-gray-100 flex items-center justify-center overflow-hidden">
-                  {p.images[0] ? <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover" /> : <div className="text-gray-400">No image</div>}
+              <Link to={`/product/${p._id}`} key={p._id}>
+                <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                  <div className="w-full h-40 bg-gray-100 flex items-center justify-center overflow-hidden">
+                    {p.images[0] ? <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover" /> : <div className="text-gray-400">No image</div>}
                 </div>
                 <div className="p-4">
                   <h3 className="text-sm font-medium text-gray-900 truncate">{p.name}</h3>
                   <p className="text-xs text-gray-500 mt-1 truncate">{p.short || p.description || ''}</p>
                   <div className="mt-3 flex items-center justify-between">
                     <div className="text-sm font-semibold text-gray-900">${p.price?.toFixed ? p.price.toFixed(2) : (p.price || '—')}</div>
-                    <Link to={`/product/${p._id}`} className="text-xs text-blue-600">View</Link>
                   </div>
                 </div>
               </div>
+                    </Link>
             ))}
           </div>
         </div>

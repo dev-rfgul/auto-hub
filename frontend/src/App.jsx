@@ -10,6 +10,7 @@ import LoginUser from "./Pages/LoginUser";
 import DealerHome from "./Pages/DealerHome";
 import StoreHome from "./Pages/StoreHome";
 import ProductPreview from "./Pages/ProductPreview";
+import Home from "./Pages/Home";
 
 const App = () => {
   const [role, setRole] = useState(null);
@@ -53,6 +54,7 @@ const App = () => {
   return (
     <div className="app">
       <Navbar />
+      <Home />
       <Routes>
         {role === "admin" && (
           <>
