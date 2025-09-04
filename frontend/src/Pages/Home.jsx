@@ -252,11 +252,11 @@ const Home = () => {
               </div>
             </div>
 
-            <div className="hidden lg:block">
+            <div className="block">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-3xl opacity-20 blur-3xl"></div>
                 <img 
-                  src="/api/placeholder/600/400" 
+                  src="/assets/banner.png" 
                   alt="Auto Parts"
                   className="relative z-10 w-full h-96 object-cover rounded-2xl shadow-2xl"
                 />
