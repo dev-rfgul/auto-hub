@@ -4,7 +4,16 @@ import Cookie from "js-cookie";
 const Navbar = () => {
   const location = useLocation();
   const userCookie = Cookie.get("user");
-  console.log("User Cookie in Navbar:", userCookie);
+  // try parse cookie if present
+  let user = null;
+  try {
+    user = userCookie ? JSON.parse(userCookie) : null;
+  } catch (e) {
+    user = null;
+  }
+  console.log("User Cookie in Navbar:", user);
+  const role = user?.role || null;
+  const dashboardPath = role === 'dealer' ? '/dealer-dashboard' : role === 'admin' ? '/admin-panel' : '/user-dashboard';
 
   return (
     <nav className="bg-white shadow-sm border-b">
@@ -54,7 +63,7 @@ const Navbar = () => {
             ) : (
               <>
                 <Link
-                  to="/account"
+                  to={dashboardPath}
                   className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
                 >
                   Account
