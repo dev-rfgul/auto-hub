@@ -1,7 +1,10 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
+import Cookie from "js-cookie";
 const Navbar = () => {
   const location = useLocation();
+  const userCookie = Cookie.get("user");
+  console.log("User Cookie in Navbar:", userCookie);
 
   return (
     <nav className="bg-white shadow-sm border-b">
@@ -28,21 +31,35 @@ const Navbar = () => {
             </Link>
           </div>
           <div className="flex items-center space-x-4">
-            {location.pathname !== "/signup" && (
-              <Link
-                to="/user-signup"
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-              >
-                Sign Up
-              </Link>
-            )}
-            {location.pathname !== "/login" && (
-              <Link
-                to="/login"
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-              >
-                Sign In
-              </Link>
+            {/* if no user cookie show signup/login, otherwise show account */}
+            {!userCookie ? (
+              <>
+                {location.pathname !== "/signup" && (
+                  <Link
+                    to="/user-signup"
+                    className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  >
+                    Sign Up
+                  </Link>
+                )}
+                {location.pathname !== "/login" && (
+                  <Link
+                    to="/login"
+                    className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  >
+                    Sign In
+                  </Link>
+                )}
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/account"
+                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Account
+                </Link>
+              </>
             )}
             {location.pathname !== "/" && (
               <Link
