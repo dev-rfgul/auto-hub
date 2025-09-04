@@ -13,6 +13,7 @@ It provides a **centralized platform** for:
 - **Dealer** → Registers store, uploads spare parts, manages stock & orders.  
 - **User** → Searches, filters, compares, views details, purchases parts, submits reviews, interacts with chatbot.  
 
+
 ---
 
 ## 🛠️ Tech Stack – MERN
