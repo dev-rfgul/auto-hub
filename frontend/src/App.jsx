@@ -25,7 +25,7 @@ const App = () => {
     const userCookie = Cookie.get("user");
     let user = null;
     try {
-      user = userCookie ? JSON.parse(userCookie) : null;
+      user = userCookie ? JSON.parse(userCookie): null;
       console.log("User from cookie:", user);
     } catch (e) {
       user = null;

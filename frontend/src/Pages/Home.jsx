@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Search, Filter, Star, ShoppingCart, Eye, Heart, Wrench, Battery, Zap, Gauge } from 'lucide-react';
 import axios from 'axios';
+import { Link } from 'react-router-dom';
 
 
 const CategoryPill = ({ name, icon: Icon, isActive, onClick }) => (
@@ -22,12 +23,14 @@ const ProductCard = ({ product }) => {
 
   return (
     <div className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-100 group">
+      <Link to={`/product/${product._id}`}>
+      {/* product images section */}
       <div className="relative overflow-hidden">
-        <img 
-          src={product.images[0]} 
-          alt={product.name}
-          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-        />
+          <img
+            src={product.images[0]}
+            alt={product.name}
+            className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+          />
         {discountPercentage > 0 && (
           <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-md text-xs font-semibold">
             -{discountPercentage}%
@@ -42,7 +45,8 @@ const ProductCard = ({ product }) => {
           </button>
         </div>
       </div>
-      
+
+      {/* product details section */}
       <div className="p-4">
         <div className="text-xs text-blue-600 font-medium mb-1">{product.brand}</div>
         <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2">{product.name}</h3>
@@ -85,6 +89,7 @@ const ProductCard = ({ product }) => {
           Add to Cart
         </button>
       </div>
+      </Link>
     </div>
   );
 };
@@ -271,6 +276,7 @@ const Home = () => {
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
             {featuredProducts.map((product) => (
+              <Link to={`/product/${product._id}`} key={product._id}>
               <div key={product._id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-4 border border-gray-100">
                 <img 
                   src={product.images[0]} 
@@ -281,6 +287,7 @@ const Home = () => {
                 <div className="text-xs text-gray-500 mb-2">{product.brand}</div>
                 <div className="text-lg font-bold text-green-600">${product.price}</div>
               </div>
+              </Link>
             ))}
           </div>
         </section>
