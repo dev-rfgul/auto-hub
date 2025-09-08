@@ -11,6 +11,7 @@ import DealerHome from "./Pages/DealerHome";
 import StoreHome from "./Pages/StoreHome";
 import ProductPreview from "./Pages/ProductPreview";
 import Home from "./Pages/Home";
+import UserDashboard from "./Pages/UserDashboard";
 
 const App = () => {
   const [role, setRole] = useState(null);
@@ -24,7 +25,7 @@ const App = () => {
     const userCookie = Cookie.get("user");
     let user = null;
     try {
-      user = userCookie ? JSON.parse(userCookie) : null;
+      user = userCookie ? JSON.parse(userCookie): null;
       console.log("User from cookie:", user);
     } catch (e) {
       user = null;
@@ -71,6 +72,7 @@ const App = () => {
           </>
         )}
         <Route path="/user-signup" element={<Signup />} />
+        <Route path="/user-dashboard" element={<UserDashboard />} />
         <Route path="/login" element={<LoginUser />} />
         <Route path="/product/:id" element={<ProductPreview />} />
       </Routes>
