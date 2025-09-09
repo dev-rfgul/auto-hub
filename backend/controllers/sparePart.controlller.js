@@ -26,3 +26,7 @@ export const getSparePartById = async (req, res) => {
     res.status(500).json({ message: 'Error fetching spare part by id', error: error.message });
   }
 };
+
+export const addToCart=async(req,res)=>{
+  
+}
