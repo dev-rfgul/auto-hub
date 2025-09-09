@@ -441,6 +441,7 @@ export default Compare;
 // Enhanced Modal component
 export const CompareModal = ({ baseProduct, onClose }) => {
   const [query, setQuery] = useState('');
+  const [allProducts, setAllProducts] = useState([]);
   const [results, setResults] = useState([]);
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -452,42 +453,45 @@ export const CompareModal = ({ baseProduct, onClose }) => {
     compatibility: ''
   });
 
-  const search = async (q) => {
-    if (!q) return setResults([]);
-    try {
+  // fetch full list once
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
       setLoading(true);
-      const base = import.meta.env.VITE_BACKEND_URL || '';
-      const res = await fetch(`${base}/api/spareparts/getAllSpareParts`);
-      const list = await res.json();
-      
-      // Enhanced filtering
-      let filtered = (list || []).filter(p => {
-        const matchesQuery = p.name?.toLowerCase().includes(q.toLowerCase()) ||
-                           p.brand?.toLowerCase().includes(q.toLowerCase()) ||
-                           p.partNumber?.toLowerCase().includes(q.toLowerCase());
-        
+      try {
+        const base = import.meta.env.VITE_BACKEND_URL || '';
+        const res = await fetch(`${base}/api/spareparts/getAllSpareParts`);
+        const list = await res.json();
+        if (!cancelled) setAllProducts(list || []);
+      } catch (e) {
+        console.error('Failed to load products for compare', e);
+        if (!cancelled) setAllProducts([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // live search (debounced)
+  useEffect(() => {
+    if (!query) { setResults([]); return; }
+    setLoading(true);
+    const t = setTimeout(() => {
+      const q = query.toLowerCase();
+      let filtered = (allProducts || []).filter(p => {
+        const matchesQuery = p.name?.toLowerCase().includes(q) || p.brand?.toLowerCase().includes(q) || p.partNumber?.toLowerCase().includes(q);
         const matchesBrand = !filters.brand || p.brand?.toLowerCase().includes(filters.brand.toLowerCase());
         const matchesMinPrice = !filters.minPrice || parseFloat(p.price) >= parseFloat(filters.minPrice);
         const matchesMaxPrice = !filters.maxPrice || parseFloat(p.price) <= parseFloat(filters.maxPrice);
-        const matchesCompatibility = !filters.compatibility || 
-                                   p.specifications?.compatibility?.some(c => 
-                                     c.toLowerCase().includes(filters.compatibility.toLowerCase()));
-        
+        const matchesCompatibility = !filters.compatibility || p.specifications?.compatibility?.some(c => c.toLowerCase().includes(filters.compatibility.toLowerCase()));
         return matchesQuery && matchesBrand && matchesMinPrice && matchesMaxPrice && matchesCompatibility;
-      });
-      
-      setResults(filtered.slice(0, 20));
-    } catch (e) {
-      console.error('Compare search failed', e);
-      setResults([]);
-    } finally {
+      }).slice(0, 20);
+      setResults(filtered);
       setLoading(false);
-    }
-  };
-
-  const handleCompare = () => {
-    setShowComparison(true);
-  };
+    }, 220);
+    return () => clearTimeout(t);
+  }, [query, allProducts, filters]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 p-4">
@@ -527,26 +531,16 @@ export const CompareModal = ({ baseProduct, onClose }) => {
                 <div className="space-y-4">
                   {/* Search Input */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Search for parts to compare
-                    </label>
-                    <div className="flex">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Search for parts to compare</label>
+                    <div>
                       <input
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter') search(query); }}
-                        className="flex-1 border border-gray-300 rounded-l-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Search by name, brand, or part number"
+                        className="w-full border border-gray-300 rounded px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Type to search by name, brand, or part number"
                       />
-                      <button
-                        onClick={() => search(query)}
-                        className="px-6 py-2 bg-blue-600 text-white rounded-r-lg hover:bg-blue-700 font-medium"
-                      >
-                        Search
-                      </button>
                     </div>
                   </div>
-
 
                   {/* Results */}
                   <div className="space-y-3 max-h-96 overflow-y-auto">
@@ -555,7 +549,16 @@ export const CompareModal = ({ baseProduct, onClose }) => {
                       <div className="text-center py-8 text-gray-500">No matching parts found</div>
                     )}
                     {results.map((result) => (
-                      <div key={result._id} className="flex items-center gap-4 p-4 border rounded-lg hover:bg-gray-50">
+                      <button
+                        key={result._id}
+                        type="button"
+                        onClick={() => {
+                          setSelected(result);
+                          setResults([result]);
+                          setShowComparison(true);
+                        }}
+                        className="w-full text-left flex items-center gap-4 p-4 border rounded-lg hover:bg-gray-50"
+                      >
                         <img
                           src={(result.images && result.images[0]) || '/vite.svg'}
                           alt={result.name}
@@ -572,53 +575,9 @@ export const CompareModal = ({ baseProduct, onClose }) => {
                             </div>
                           )}
                         </div>
-                        <button
-                          onClick={() => setSelected(result)}
-                          className={`px-4 py-2 rounded-lg font-medium ${
-                            selected?._id === result._id
-                              ? 'bg-green-600 text-white'
-                              : 'bg-blue-600 text-white hover:bg-blue-700'
-                          }`}
-                        >
-                          {selected?._id === result._id ? 'Selected' : 'Select'}
-                        </button>
-                      </div>
+                      </button>
                     ))}
                   </div>
-
-                  {/* Selected Product */}
-                  {selected && (
-                    <div className="mt-6 p-4 border-2 border-green-200 rounded-lg bg-green-50">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="font-semibold text-green-800">Selected for Comparison</div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setSelected(null)}
-                            className="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
-                          >
-                            Clear
-                          </button>
-                          <button
-                            onClick={handleCompare}
-                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
-                          >
-                            Compare Now
-                          </button>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <img
-                          src={(selected.images && selected.images[0]) || '/vite.svg'}
-                          alt={selected.name}
-                          className="w-16 h-12 object-cover rounded"
-                        />
-                        <div>
-                          <div className="font-medium">{selected.name}</div>
-                          <div className="text-sm text-gray-600">{selected.brand} • ${selected.price}</div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -674,80 +633,18 @@ export const CompareModal = ({ baseProduct, onClose }) => {
                 <table className="w-full border border-gray-200 rounded-lg overflow-hidden">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 w-1/3">
-                        Specification
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 w-1/3">
-                        {baseProduct?.name}
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 w-1/3">
-                        {selected?.name}
-                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 w-1/3">Specification</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 w-1/3">{baseProduct?.name}</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 w-1/3">{selected?.name}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    <ComparisonRow
-                      label="Product Image"
-                      baseValue={
-                        <img
-                          src={(baseProduct?.images && baseProduct.images[0]) || '/vite.svg'}
-                          alt={baseProduct?.name}
-                          className="w-32 h-24 object-cover rounded"
-                        />
-                      }
-                      selectedValue={
-                        <img
-                          src={(selected?.images && selected.images[0]) || '/vite.svg'}
-                          alt={selected?.name}
-                          className="w-32 h-24 object-cover rounded"
-                        />
-                      }
-                    />
+                    <ComparisonRow label="Product Image" baseValue={<img src={(baseProduct?.images && baseProduct.images[0]) || '/vite.svg'} alt={baseProduct?.name} className="w-32 h-24 object-cover rounded"/>} selectedValue={<img src={(selected?.images && selected.images[0]) || '/vite.svg'} alt={selected?.name} className="w-32 h-24 object-cover rounded"/>} />
                     <ComparisonRow label="Brand" baseValue={baseProduct?.brand} selectedValue={selected?.brand} />
                     <ComparisonRow label="Part Number" baseValue={baseProduct?.partNumber} selectedValue={selected?.partNumber} />
-                    <ComparisonRow 
-                      label="Price" 
-                      baseValue={
-                        <span className={`font-bold ${parseFloat(baseProduct?.price) < parseFloat(selected?.price) ? 'text-green-600' : 'text-gray-700'}`}>
-                          ${baseProduct?.price}
-                          {parseFloat(baseProduct?.price) < parseFloat(selected?.price) && <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Better Price</span>}
-                        </span>
-                      }
-                      selectedValue={
-                        <span className={`font-bold ${parseFloat(selected?.price) < parseFloat(baseProduct?.price) ? 'text-green-600' : 'text-gray-700'}`}>
-                          ${selected?.price}
-                          {parseFloat(selected?.price) < parseFloat(baseProduct?.price) && <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Better Price</span>}
-                        </span>
-                      }
-                    />
-                    <ComparisonRow 
-                      label="Rating" 
-                      baseValue={
-                        <div className="flex items-center">
-                          <StarRating rating={baseProduct?.rating || 0} />
-                          <span className="ml-2">({baseProduct?.rating || 0})</span>
-                        </div>
-                      }
-                      selectedValue={
-                        <div className="flex items-center">
-                          <StarRating rating={selected?.rating || 0} />
-                          <span className="ml-2">({selected?.rating || 0})</span>
-                        </div>
-                      }
-                    />
-                    <ComparisonRow 
-                      label="Stock Status" 
-                      baseValue={
-                        <span className={baseProduct?.stockQuantity > 0 ? 'text-green-600' : 'text-red-600'}>
-                          {baseProduct?.stockQuantity > 0 ? `${baseProduct.stockQuantity} in stock` : 'Out of stock'}
-                        </span>
-                      }
-                      selectedValue={
-                        <span className={selected?.stockQuantity > 0 ? 'text-green-600' : 'text-red-600'}>
-                          {selected?.stockQuantity > 0 ? `${selected.stockQuantity} in stock` : 'Out of stock'}
-                        </span>
-                      }
-                    />
+                    <ComparisonRow label="Price" baseValue={<span className={`font-bold ${parseFloat(baseProduct?.price) < parseFloat(selected?.price || '0') ? 'text-green-600' : 'text-gray-700'}`}>${baseProduct?.price}</span>} selectedValue={<span className={`font-bold ${parseFloat(selected?.price || '0') < parseFloat(baseProduct?.price || '0') ? 'text-green-600' : 'text-gray-700'}`}>${selected?.price}</span>} />
+                    <ComparisonRow label="Rating" baseValue={<div className="flex items-center"><StarRating rating={baseProduct?.rating || 0} /><span className="ml-2">({baseProduct?.rating || 0})</span></div>} selectedValue={<div className="flex items-center"><StarRating rating={selected?.rating || 0} /><span className="ml-2">({selected?.rating || 0})</span></div>} />
+                    <ComparisonRow label="Stock Status" baseValue={<span className={baseProduct?.stockQuantity > 0 ? 'text-green-600' : 'text-red-600'}>{baseProduct?.stockQuantity > 0 ? `${baseProduct.stockQuantity} in stock` : 'Out of stock'}</span>} selectedValue={<span className={selected?.stockQuantity > 0 ? 'text-green-600' : 'text-red-600'}>{selected?.stockQuantity > 0 ? `${selected.stockQuantity} in stock` : 'Out of stock'}</span>} />
                     <ComparisonRow label="Warranty" baseValue={baseProduct?.specifications?.warranty || 'Not specified'} selectedValue={selected?.specifications?.warranty || 'Not specified'} />
                     <ComparisonRow label="Material" baseValue={baseProduct?.specifications?.material || 'Not specified'} selectedValue={selected?.specifications?.material || 'Not specified'} />
                     <ComparisonRow label="Weight" baseValue={baseProduct?.specifications?.weight || 'Not specified'} selectedValue={selected?.specifications?.weight || 'Not specified'} />
@@ -760,40 +657,20 @@ export const CompareModal = ({ baseProduct, onClose }) => {
 
               {/* Action Buttons */}
               <div className="flex justify-center space-x-4 pt-6">
-                <button
-                  onClick={() => {
+                <button onClick={() => {
                     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
                     const existing = cart.find(item => item._id === baseProduct._id);
-                    if (existing) {
-                      existing.quantity += 1;
-                    } else {
-                      cart.push({ ...baseProduct, quantity: 1 });
-                    }
+                    if (existing) existing.quantity += 1; else cart.push({ ...baseProduct, quantity: 1 });
                     localStorage.setItem('cart', JSON.stringify(cart));
                     alert(`${baseProduct.name} added to cart!`);
-                  }}
-                  disabled={baseProduct?.stockQuantity === 0}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed font-medium"
-                >
-                  Add Base Product to Cart
-                </button>
-                <button
-                  onClick={() => {
+                  }} disabled={baseProduct?.stockQuantity === 0} className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed font-medium">Add Base Product to Cart</button>
+                <button onClick={() => {
                     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
                     const existing = cart.find(item => item._id === selected._id);
-                    if (existing) {
-                      existing.quantity += 1;
-                    } else {
-                      cart.push({ ...selected, quantity: 1 });
-                    }
+                    if (existing) existing.quantity += 1; else cart.push({ ...selected, quantity: 1 });
                     localStorage.setItem('cart', JSON.stringify(cart));
                     alert(`${selected.name} added to cart!`);
-                  }}
-                  disabled={selected?.stockQuantity === 0}
-                  className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed font-medium"
-                >
-                  Add Selected Product to Cart
-                </button>
+                  }} disabled={selected?.stockQuantity === 0} className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed font-medium">Add Selected Product to Cart</button>
               </div>
 
               {/* Recommendation */}
