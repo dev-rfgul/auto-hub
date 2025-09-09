@@ -150,7 +150,8 @@ const ProductPreview = ({ product: initialProduct = null }) => {
 
             <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:space-x-3 space-y-2 sm:space-y-0">
               <button className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded">Add to Cart</button>
-              <button className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded">View Details</button>
+              <Link to="/compare" className="w-full sm:w-auto px-4 py-2 bg-gray-200 text-gray-800 rounded text-center hover:bg-gray-300">Compare</Link>
+
             </div>
 
             <div className="mt-6">
