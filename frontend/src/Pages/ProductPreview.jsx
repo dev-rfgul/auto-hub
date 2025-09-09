@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
+import { CompareModal } from './Compare';
 
 
 const PlaceholderImages = ({ images = [], onThumbnailClick = () => {} }) => {
@@ -37,6 +38,7 @@ const ProductPreview = ({ product: initialProduct = null }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showCompareModal, setShowCompareModal] = useState(false);
 
   useEffect(() => {
     if (product || !id) return;
@@ -150,7 +152,7 @@ const ProductPreview = ({ product: initialProduct = null }) => {
 
             <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:space-x-3 space-y-2 sm:space-y-0">
               <button className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded">Add to Cart</button>
-              <Link to="/compare" className="w-full sm:w-auto px-4 py-2 bg-gray-200 text-gray-800 rounded text-center hover:bg-gray-300">Compare</Link>
+              <button onClick={() => setShowCompareModal(true)} className="w-full sm:w-auto px-4 py-2 bg-gray-200 text-gray-800 rounded text-center hover:bg-gray-300">Compare</button>
 
             </div>
 
@@ -196,6 +198,11 @@ const ProductPreview = ({ product: initialProduct = null }) => {
             )}
           </div>
         </div>
+      )}
+
+      {/* Compare modal (search and inline table) */}
+      {showCompareModal && (
+        <CompareModal baseProduct={p} onClose={() => setShowCompareModal(false)} />
       )}
 
         {/* small footer note */}

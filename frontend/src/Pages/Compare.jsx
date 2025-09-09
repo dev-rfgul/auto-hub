@@ -130,3 +130,128 @@ const Compare = () => {
 };
 
 export default Compare;
+
+// Modal component to compare current product with a searched product
+export const CompareModal = ({ baseProduct, onClose }) => {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const search = async (q) => {
+    if (!q) return setResults([]);
+    try {
+      setLoading(true);
+      const base = import.meta.env.VITE_BACKEND_URL || '';
+      const res = await fetch(`${base}/api/spareparts/getAllSpareParts`);
+      console.log('Fetched products for compare search',res);
+      const list = await res.json();
+      // simple client-side filter by name/brand/partNumber
+      const filtered = (list || []).filter(p =>
+        p.name?.toLowerCase().includes(q.toLowerCase()) ||
+        p.brand?.toLowerCase().includes(q.toLowerCase()) ||
+        p.partNumber?.toLowerCase().includes(q.toLowerCase())
+      );
+      setResults(filtered.slice(0, 12));
+    } catch (e) {
+      console.error('Compare search failed', e);
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+      <div className="bg-white rounded-lg shadow-lg w-full max-w-4xl p-4 mx-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-semibold">Compare with another product</h3>
+          <button onClick={onClose} className="text-sm text-gray-600">Close</button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="md:col-span-1 p-2 border rounded">
+            <div className="font-medium mb-2">Base Product</div>
+            <img src={(baseProduct && baseProduct.images && baseProduct.images[0]) || '/vite.svg'} alt={baseProduct?.name} className="w-full h-36 object-cover rounded mb-2" />
+            <div className="text-sm font-semibold">{baseProduct?.name}</div>
+            <div className="text-sm text-gray-600">{baseProduct?.brand}</div>
+            <div className="text-sm text-green-600 font-bold mt-2">${baseProduct?.price}</div>
+          </div>
+
+          <div className="md:col-span-2 p-2 border rounded">
+            <div className="mb-3">
+              <label className="block text-sm font-medium text-gray-700">Search product to compare</label>
+              <div className="mt-1 flex">
+                <input value={query} onChange={(e) => { setQuery(e.target.value); }} onKeyDown={(e) => { if (e.key === 'Enter') search(query); }} className="w-full border rounded-l px-3 py-2" placeholder="Search by name, brand or part number" />
+                <button onClick={() => search(query)} className="px-4 bg-blue-600 text-white rounded-r">Search</button>
+              </div>
+            </div>
+
+            <div className="space-y-2 max-h-64 overflow-auto">
+              {loading && <div className="text-sm text-gray-500">Searching…</div>}
+              {!loading && results.length === 0 && query && <div className="text-sm text-gray-500">No results</div>}
+              {results.map((r) => (
+                <div key={r._id} className="flex items-center gap-3 p-2 border rounded hover:bg-gray-50">
+                  <img src={(r.images && r.images[0]) || '/vite.svg'} alt={r.name} className="w-16 h-12 object-cover rounded" />
+                  <div className="flex-1">
+                    <div className="text-sm font-medium">{r.name}</div>
+                    <div className="text-xs text-gray-500">{r.brand} • {r.partNumber}</div>
+                  </div>
+                  <div>
+                    <button onClick={() => setSelected(r)} className="px-3 py-1 bg-blue-600 text-white text-sm rounded">Select</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {selected && (
+              <div className="mt-3 p-3 border rounded bg-gray-50">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="font-medium">Selected</div>
+                    <div className="text-sm">{selected.name}</div>
+                    <div className="text-xs text-gray-500">{selected.brand}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => setSelected(null)} className="px-2 py-1 text-sm border rounded">Clear</button>
+                    <button onClick={() => {
+                      // open a simple inline compare table by replacing modal content
+                      // we'll render a two-column table below by setting results to [baseProduct, selected]
+                      // store as a small state variable
+                      // For simplicity, replace results with the selected pair
+                      setResults([selected]);
+                    }} className="px-3 py-1 bg-green-600 text-white rounded">Compare</button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Inline compare table if results contains the selected */}
+        {results && results.length > 0 && results[0]._id === (selected && selected._id) && (
+          <div className="mt-4 overflow-auto">
+            <table className="w-full table-auto text-sm border">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="p-2 text-left">Property</th>
+                  <th className="p-2 text-left">Base</th>
+                  <th className="p-2 text-left">Selected</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-t"><td className="p-2">Image</td><td className="p-2"><img src={(baseProduct.images && baseProduct.images[0]) || '/vite.svg'} alt="base" className="w-32 h-20 object-cover rounded"/></td><td className="p-2"><img src={(selected.images && selected.images[0]) || '/vite.svg'} alt="sel" className="w-32 h-20 object-cover rounded"/></td></tr>
+                <tr className="border-t"><td className="p-2">Name</td><td className="p-2">{baseProduct.name}</td><td className="p-2">{selected.name}</td></tr>
+                <tr className="border-t"><td className="p-2">Brand</td><td className="p-2">{baseProduct.brand}</td><td className="p-2">{selected.brand}</td></tr>
+                <tr className="border-t"><td className="p-2">Price</td><td className="p-2">${baseProduct.price}</td><td className="p-2">${selected.price}</td></tr>
+                <tr className="border-t"><td className="p-2">Warranty</td><td className="p-2">{baseProduct.specifications?.warranty || '—'}</td><td className="p-2">{selected.specifications?.warranty || '—'}</td></tr>
+                <tr className="border-t"><td className="p-2">Material</td><td className="p-2">{baseProduct.specifications?.material || '—'}</td><td className="p-2">{selected.specifications?.material || '—'}</td></tr>
+                <tr className="border-t"><td className="p-2">Compatibility</td><td className="p-2">{Array.isArray(baseProduct.specifications?.compatibility) ? baseProduct.specifications.compatibility.join(', ') : '—'}</td><td className="p-2">{Array.isArray(selected.specifications?.compatibility) ? selected.specifications.compatibility.join(', ') : '—'}</td></tr>
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
