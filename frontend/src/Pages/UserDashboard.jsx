@@ -53,23 +53,41 @@ const UserDashboard = () => {
     }
   };
 
-  const removeFromCart = async (productId) => {
+  const removeFromCart = async (productOrId) => {
+    setError('');
+    if (!user || !user._id) {
+      setError('User not authenticated');
+      return;
+    }
+
+    // normalize id (handles populated objects)
+    const productId =
+      productOrId && typeof productOrId === 'object'
+        ? productOrId._id || productOrId.id || productOrId.sparePartId || (productOrId.sparePartId && productOrId.sparePartId._id)
+        : productOrId;
+
+    if (!productId) {
+      setError('Invalid product id');
+      return;
+    }
+
     try {
       const base = import.meta.env.VITE_BACKEND_URL || '';
-      const res= await axios.post(`${base}/api/spareparts/removeFromCart/`,{
-        userId: user._id,
-        productId
-      },{
-        withCredentials: true
-      });
-      console.log(res.data)
-      // Refresh cart after removal
-      if (user && user._id) {
-        fetchCart(user._id);
+      // send body as second arg, config (withCredentials) as third arg
+      const res = await axios.post(
+        `${base}/api/spareparts/removeFromCart`,
+        { userId: user._id, productId },
+        { withCredentials: true }
+      );
+
+      if (res?.status === 200) {
+        setCart(res.data?.cart || null);
+      } else {
+        setError(res?.data?.message || 'Failed to remove item from cart');
       }
-    } catch (error) {
-      console.error('Error removing from cart:', error);
-      setError('Failed to remove item from cart');
+    } catch (err) {
+      console.error('Error removing from cart:', err);
+      setError(err.response?.data?.message || err.message || 'Failed to remove item from cart');
     }
   };
 

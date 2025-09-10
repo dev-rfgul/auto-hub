@@ -172,10 +172,10 @@ export const getCart = async (req, res) => {
 };
 
 // remove item from cart
+// ...existing code...
 export const removeFromCart = async (req, res) => {
   try {
-    const { userId, productId } = req.body;
-    
+    const {productId,userId } = req.body;
     if (!userId || !productId) {
       return res.status(400).json({ message: 'User ID and Product ID are required' });
     }
@@ -185,26 +185,30 @@ export const removeFromCart = async (req, res) => {
       return res.status(404).json({ message: 'Cart not found' });
     }
 
-    // remove item from cart
+    const beforeCount = cart.items.length;
     cart.items = cart.items.filter(item => String(item.sparePartId) !== String(productId));
-    
-    // recalculate total
-    cart.totalAmount = cart.items.reduce((total, item) => {
-      return total + (item.price * item.quantity);
-    }, 0);
+
+    if (cart.items.length === beforeCount) {
+      return res.status(404).json({ message: 'Product not found in cart' });
+    }
+
+    // recalculate total (safe default 0)
+    cart.totalAmount = cart.items.reduce((total, item) => total + ((Number(item.price) || 0) * (Number(item.quantity) || 0)), 0);
 
     await cart.save();
-    
-    res.status(200).json({ 
-      message: 'Item removed from cart', 
-      cart 
+
+    // return populated cart for frontend convenience
+    const populatedCart = await Order.findById(cart._id).populate('items.sparePartId');
+
+    return res.status(200).json({
+      message: 'Item removed from cart',
+      cart: populatedCart
     });
-    
   } catch (error) {
     console.error('Error removing from cart:', error);
-    res.status(500).json({ 
-      message: 'Error removing item from cart', 
-      error: error.message 
+    return res.status(500).json({
+      message: 'Error removing item from cart',
+      error: error.message || String(error)
     });
   }
 };
