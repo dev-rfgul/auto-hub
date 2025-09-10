@@ -12,6 +12,7 @@ import StoreHome from "./Pages/StoreHome";
 import ProductPreview from "./Pages/ProductPreview";
 import Home from "./Pages/Home";
 import UserDashboard from "./Pages/UserDashboard";
+import Compare from "./Pages/Compare";
 
 const App = () => {
   const [role, setRole] = useState(null);
@@ -75,6 +76,7 @@ const App = () => {
         <Route path="/user-dashboard" element={<UserDashboard />} />
         <Route path="/login" element={<LoginUser />} />
         <Route path="/product/:id" element={<ProductPreview />} />
+        <Route path="/compare" element={<Compare />} />
       </Routes>
     </div>
   );

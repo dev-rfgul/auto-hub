@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
+import { CompareModal } from './Compare';
 
 
 const PlaceholderImages = ({ images = [], onThumbnailClick = () => {} }) => {
@@ -37,6 +38,9 @@ const ProductPreview = ({ product: initialProduct = null }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showCompareModal, setShowCompareModal] = useState(false);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [cartMessage, setCartMessage] = useState('');
 
   useEffect(() => {
     if (product || !id) return;
@@ -89,6 +93,35 @@ const ProductPreview = ({ product: initialProduct = null }) => {
       setSelectedImage(p.images[0]);
     }
   }, [p, selectedImage]);
+
+  const addToCart = async () => {
+    setAddingToCart(true);
+    setCartMessage('');
+    
+    try {
+      const base = import.meta.env.VITE_BACKEND_URL || '';
+      const response = await axios.post(`${base}/api/spareparts/addToCart`, {
+        productId: p._id || id,
+        quantity: 1
+      }, {
+        withCredentials: true
+      });
+
+      if (response.status === 200 || response.status === 201) {
+        setCartMessage('✅ Added to cart successfully!');
+        // clear message after 3 seconds
+        setTimeout(() => setCartMessage(''), 3000);
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      const errorMsg = error.response?.data?.message || 'Failed to add to cart';
+      setCartMessage(`❌ ${errorMsg}`);
+      // clear error message after 5 seconds
+      setTimeout(() => setCartMessage(''), 5000);
+    } finally {
+      setAddingToCart(false);
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-6">
@@ -149,9 +182,30 @@ const ProductPreview = ({ product: initialProduct = null }) => {
             </div>
 
             <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:space-x-3 space-y-2 sm:space-y-0">
-              <button className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded">Add to Cart</button>
-              <button className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded">View Details</button>
+              <button 
+                onClick={addToCart}
+                disabled={addingToCart || p.stockQuantity <= 0}
+                className={`w-full sm:w-auto px-4 py-2 rounded font-medium ${
+                  addingToCart || p.stockQuantity <= 0 
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+              >
+                {addingToCart ? 'Adding...' : 'Add to Cart'}
+              </button>
+              <button onClick={() => setShowCompareModal(true)} className="w-full sm:w-auto px-4 py-2 bg-gray-200 text-gray-800 rounded text-center hover:bg-gray-300">Compare</button>
             </div>
+
+            {/* Cart message feedback */}
+            {cartMessage && (
+              <div className={`mt-3 p-3 rounded text-sm ${
+                cartMessage.includes('✅') 
+                  ? 'bg-green-50 text-green-700 border border-green-200' 
+                  : 'bg-red-50 text-red-700 border border-red-200'
+              }`}>
+                {cartMessage}
+              </div>
+            )}
 
             <div className="mt-6">
               <h3 className="text-sm font-semibold mb-2">Specifications</h3>
@@ -195,6 +249,11 @@ const ProductPreview = ({ product: initialProduct = null }) => {
             )}
           </div>
         </div>
+      )}
+
+      {/* Compare modal (search and inline table) */}
+      {showCompareModal && (
+        <CompareModal baseProduct={p} onClose={() => setShowCompareModal(false)} />
       )}
 
         {/* small footer note */}
