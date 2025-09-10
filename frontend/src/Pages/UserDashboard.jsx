@@ -11,23 +11,36 @@ const UserDashboard = () => {
 
   useEffect(() => {
     // Get user info from cookie
+    let userData = null;
     try {
       const userCookie = Cookie.get('user');
+      console.log('User cookie:', JSON.parse(userCookie));
       if (userCookie) {
-        setUser(JSON.parse(userCookie));
+        userData = JSON.parse(userCookie);
+        setUser(userData);
       }
     } catch (e) {
       console.error('Error parsing user cookie:', e);
     }
 
-    fetchCart();
+    // Fetch cart only if user data is available
+    if (userData && userData._id) {
+      fetchCart(userData._id);
+    }
   }, []);
 
-  const fetchCart = async () => {
+  const fetchCart = async (userId) => {
+    if (!userId) {
+      console.log('No userId provided to fetchCart');
+      setLoading(false);
+      return;
+    }
+    
+    console.log('Fetching cart for user ID:', userId);
     try {
       setLoading(true);
       const base = import.meta.env.VITE_BACKEND_URL || '';
-      const response = await axios.get(`${base}/api/spareparts/cart/user`, {
+      const response = await axios.get(`${base}/api/spareparts/cart/${userId}`, {
         withCredentials: true
       });
       
@@ -49,7 +62,9 @@ const UserDashboard = () => {
       });
       
       // Refresh cart after removal
-      fetchCart();
+      if (user && user._id) {
+        fetchCart(user._id);
+      }
     } catch (error) {
       console.error('Error removing from cart:', error);
       setError('Failed to remove item from cart');
@@ -75,7 +90,9 @@ const UserDashboard = () => {
       });
       
       // Refresh cart
-      fetchCart();
+      if (user && user._id) {
+        fetchCart(user._id);
+      }
     } catch (error) {
       console.error('Error updating quantity:', error);
       setError('Failed to update quantity');
@@ -102,7 +119,9 @@ const UserDashboard = () => {
       
       if (response.status === 200) {
         alert('Order placed successfully!');
-        fetchCart(); // Refresh to show empty cart
+        if (user && user._id) {
+          fetchCart(user._id); // Refresh to show empty cart
+        }
       }
     } catch (error) {
       console.error('Error during checkout:', error);
