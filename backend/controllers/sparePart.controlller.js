@@ -174,14 +174,7 @@ export const getCart = async (req, res) => {
 // remove item from cart
 export const removeFromCart = async (req, res) => {
   try {
-    const { productId } = req.body;
-    
-    let userId = null;
-    if (req.user && req.user._id) userId = req.user._id;
-    else if (req.body.userId) userId = req.body.userId;
-    else if (req.cookies?.user) {
-      try { userId = JSON.parse(req.cookies.user)._id; } catch (e) {}
-    }
+    const { userId, productId } = req.body;
     
     if (!userId || !productId) {
       return res.status(400).json({ message: 'User ID and Product ID are required' });

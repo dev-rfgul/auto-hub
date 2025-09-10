@@ -56,11 +56,13 @@ const UserDashboard = () => {
   const removeFromCart = async (productId) => {
     try {
       const base = import.meta.env.VITE_BACKEND_URL || '';
-      await axios.delete(`${base}/api/spareparts/remove-from-cart`, {
-        data: { productId },
+      const res= await axios.post(`${base}/api/spareparts/removeFromCart/`,{
+        userId: user._id,
+        productId
+      },{
         withCredentials: true
       });
-      
+      console.log(res.data)
       // Refresh cart after removal
       if (user && user._id) {
         fetchCart(user._id);
