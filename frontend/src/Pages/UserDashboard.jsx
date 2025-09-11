@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Cookie from 'js-cookie';
 
@@ -8,6 +8,8 @@ const UserDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [user, setUser] = useState(null);
+  const navigate = useNavigate();
+  const [checkingOut, setCheckingOut] = useState(false);
 
   useEffect(() => {
     // Get user info from cookie
@@ -120,32 +122,49 @@ const UserDashboard = () => {
   };
 
   const checkout = async () => {
+    setError('');
+    if (!user || !user._id) {
+      setError('User not authenticated');
+      return;
+    }
+    if (!cart || !cart.items || cart.items.length === 0) {
+      setError('Cart is empty');
+      return;
+    }
+
+    // Replace with a form later — using minimal placeholders now
+    const shippingAddress = user.address || {
+      street: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      country: ''
+    };
+    const paymentInfo = { method: 'cod' };
+
     try {
+      setCheckingOut(true);
       const base = import.meta.env.VITE_BACKEND_URL || '';
-      const response = await axios.post(`${base}/api/spareparts/checkout`, {
-        shippingAddress: {
-          street: "123 Main St", // You can add a form for this
-          city: "City",
-          state: "State",
-          zipCode: "12345",
-          country: "Country"
-        },
-        paymentInfo: {
-          method: "cod" // Cash on delivery for now
-        }
-      }, {
-        withCredentials: true
-      });
-      
-      if (response.status === 200) {
-        alert('Order placed successfully!');
-        if (user && user._id) {
-          fetchCart(user._id); // Refresh to show empty cart
-        }
+      const res = await axios.post(
+        `${base}/api/spareparts/checkout`,
+        { shippingAddress, paymentInfo },
+        { withCredentials: true }
+      );
+
+      if (res.status === 200 || res.status === 201) {
+        // backend returns order (or orders) after checkout
+        // clear or refresh cart UI
+        await fetchCart(user._id);
+        // navigate to orders page (adjust path if different)
+        navigate('/orders');
+      } else {
+        setError(res.data?.message || 'Checkout failed');
       }
-    } catch (error) {
-      console.error('Error during checkout:', error);
-      setError('Failed to place order');
+    } catch (err) {
+      console.error('Checkout error', err);
+      setError(err.response?.data?.message || err.message || 'Checkout failed');
+    } finally {
+      setCheckingOut(false);
     }
   };
 
@@ -284,9 +303,10 @@ const UserDashboard = () => {
                 <div className="flex gap-3">
                   <button
                     onClick={checkout}
+                    disabled={checkingOut}
                     className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
                   >
-                    Proceed to Checkout
+                    {checkingOut ? 'Processing...' : 'Proceed to Checkout'}
                   </button>
                   <Link
                     to="/"
