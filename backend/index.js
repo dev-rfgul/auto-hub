@@ -11,6 +11,7 @@ import adminRoutes from './routes/admin.routes.js';
 import storeRoutes from './routes/store.routes.js';
 import productRoutes from './routes/product.routes.js';
 import sparePartRoutes from './routes/sparePart.routes.js';
+import orderRoutes from './routes/order.routes.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
