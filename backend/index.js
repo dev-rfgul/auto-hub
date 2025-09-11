@@ -41,6 +41,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/store',storeRoutes);
 app.use('/api/product',productRoutes);
 app.use('/api/spareparts', sparePartRoutes);
+app.use('/api/order', orderRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
