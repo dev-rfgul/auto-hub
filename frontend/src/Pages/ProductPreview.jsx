@@ -16,7 +16,7 @@ const PlaceholderImages = ({ images = [], onThumbnailClick = () => {} }) => {
     <div className="grid grid-cols-4 gap-2">
       {images.slice(0, 4).map((src, i) => (
         <button key={i} type="button" onClick={() => onThumbnailClick(src)} className="overflow-hidden rounded">
-          <img src={src} alt={`img-${i}`} className="h-24 w-full object-cover rounded cursor-pointer hover:opacity-90" />
+          <img src={src} alt={`img-${i}`} className="h-full w-full object-cover rounded cursor-pointer hover:opacity-90" />
         </button>
       ))}
     </div>
@@ -130,7 +130,7 @@ const ProductPreview = ({ product: initialProduct = null }) => {
         <div className="md:w-1/2">
           <div className="rounded overflow-hidden">
             <button type="button" onClick={() => setShowModal(true)} className="w-full block">
-              <img src={selectedImage || (p.images && p.images[0]) || '/vite.svg'} alt={p.name} className="w-full h-64 object-cover rounded" />
+              <img src={selectedImage || (p.images && p.images[0]) || '/vite.svg'} alt={p.name} className="w-full h-full object-cover rounded" />
             </button>
           </div>
 
