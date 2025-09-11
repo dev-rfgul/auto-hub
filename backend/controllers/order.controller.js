@@ -38,3 +38,19 @@ export const getAllOrders = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+
+//get order by store id
+export const getOrdersByStoreId = async (req, res) => {
+  try {
+    const storeId = req.params.storeId;
+    // Orders may reference the store on each item (items.storeId)
+    // or (less commonly) on a top-level `storeId` field. Query both.
+    const orders = await Order.find({
+      $or: [{ 'items.storeId': storeId }, { storeId }],
+    }).sort({ createdAt: -1 });
+    res.json({ orders });
+  } catch (error) {
+    console.error('Error fetching orders by store ID:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
