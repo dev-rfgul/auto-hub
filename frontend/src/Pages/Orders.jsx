@@ -37,9 +37,8 @@ const Orders = () => {
 
       const base = import.meta.env.VITE_BACKEND_URL || '';
       // prefer user-specific route if we have userId
-      const url = userId
-        ? `${base}/api/spareparts/orders/${userId}`   // adjust if your backend route differs
-        : `${base}/api/spareparts/orders`;            // fallback
+      const url =`${base}/api/orders/getOrderByUserId/${userId}`   // adjust if your backend route differs
+            // fallback
 
       try {
         const res = await axios.get(url, { withCredentials: true });
