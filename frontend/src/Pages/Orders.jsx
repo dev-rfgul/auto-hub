@@ -1,193 +1,3 @@
-// import React, { useEffect, useState } from 'react';
-// import axios from 'axios';
-// import Cookie from 'js-cookie';
-// import { Link } from 'react-router-dom';
-// import { Truck, Package, CheckCircle, XCircle, Clock } from 'lucide-react';
-
-// const statusStyles = {
-//   pending: 'bg-yellow-100 text-yellow-700 ring-1 ring-yellow-300',
-//   processed: 'bg-blue-100 text-blue-700 ring-1 ring-blue-300',
-//   shipped: 'bg-indigo-100 text-indigo-700 ring-1 ring-indigo-300',
-//   delivered: 'bg-green-100 text-green-700 ring-1 ring-green-300',
-//   cancelled: 'bg-red-100 text-red-700 ring-1 ring-red-300',
-//   cart: 'bg-gray-100 text-gray-700 ring-1 ring-gray-300'
-// };
-
-// const statusIcons = {
-//   pending: Clock,
-//   processed: Package,
-//   shipped: Truck,
-//   delivered: CheckCircle,
-//   cancelled: XCircle
-// };
-
-// const formatDate = (iso) => {
-//   try {
-//     return new Date(iso).toLocaleString();
-//   } catch {
-//     return iso;
-//   }
-// };
-
-// const Orders = () => {
-//   const [orders, setOrders] = useState([]);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState('');
-
-//   useEffect(() => {
-//     const fetchOrders = async () => {
-//       setLoading(true);
-//       setError('');
-//       let userId = null;
-//       try {
-//         const u = Cookie.get('user');
-//         if (u) userId = JSON.parse(u)._id;
-//       } catch (e) {}
-
-//       const base = import.meta.env.VITE_BACKEND_URL || '';
-//       const url = `${base}/api/orders/getOrderByUserId/${userId}`;
-
-//       try {
-//         const res = await axios.get(url, { withCredentials: true });
-//         const data = res.data?.orders ?? res.data ?? [];
-//         setOrders(Array.isArray(data) ? data : []);
-//       } catch (err) {
-//         setError(err.response?.data?.message || 'Failed to load orders');
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     fetchOrders();
-//   }, []);
-
-//   if (loading) return <div className="p-6 text-gray-500">Loading orders…</div>;
-//   if (error) return <div className="p-6 text-red-600">{error}</div>;
-
-//   if (!orders || orders.length === 0) {
-//     return (
-//       <div className="max-w-4xl mx-auto p-10 text-center bg-white rounded-xl shadow-sm">
-//         <h2 className="text-2xl font-semibold text-gray-800">No orders yet</h2>
-//         <p className="text-gray-600 mt-2">You haven’t placed any orders.</p>
-//         <Link
-//           to="/"
-//           className="mt-5 inline-block px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow transition"
-//         >
-//           Browse products
-//         </Link>
-//       </div>
-//     );
-//   }
-
-//   return (
-//     <div className="max-w-5xl mx-auto p-6 space-y-6">
-//       <h1 className="text-3xl font-bold mb-6 text-gray-900">Your Orders</h1>
-
-//       {orders.map((order) => {
-//         const Icon = statusIcons[order.status] || Package;
-//         return (
-//           <div
-//             key={order._id}
-//             className="bg-white border rounded-xl shadow hover:shadow-md transition p-6"
-//           >
-//             {/* Order Header */}
-//             <div className="flex items-start justify-between border-b pb-4">
-//               <div>
-//                 <p className="text-sm text-gray-500">
-//                   Order ID: <span className="font-mono">{order._id}</span>
-//                 </p>
-//                 <p className="mt-1 text-lg font-semibold text-gray-900">
-//                   ${(order.totalAmount || 0).toFixed(2)}
-//                 </p>
-//                 <p className="text-sm text-gray-500">
-//                   Placed: {formatDate(order.orderDate || order.createdAt)}
-//                 </p>
-//               </div>
-//               <div className="text-right">
-//                 <span
-//                   className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${statusStyles[order.status]}`}
-//                 >
-//                   <Icon className="w-4 h-4" />
-//                   {order.status}
-//                 </span>
-//                 <p className="text-xs text-gray-400 mt-2">
-//                   Updated: {formatDate(order.updatedAt)}
-//                 </p>
-//               </div>
-//             </div>
-
-//             {/* Order Content */}
-//             <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-6">
-//               {/* Items */}
-//               <div className="md:col-span-2">
-//                 <h3 className="font-semibold text-gray-800 text-sm mb-3">Items</h3>
-//                 <div className="space-y-3">
-//                   {Array.isArray(order.items) && order.items.length > 0 ? (
-//                     order.items.map((it, idx) => {
-//                       const prod = it.sparePartId || {};
-//                       return (
-//                         <div
-//                           key={idx}
-//                           className="flex items-center justify-between bg-gray-50 p-3 rounded-lg"
-//                         >
-//                           <div className="flex items-center gap-3 min-w-0">
-//                             {/* <img
-//                               src={prod.images?.[0] || '/vite.svg'}
-//                               alt={it.name || prod.name}
-//                               className="w-14 h-14 object-cover rounded-md border"
-//                             /> */}
-//                             <div className="min-w-0">
-//                               <p className="text-sm font-medium text-gray-800 truncate">
-//                                 {it.name || prod.name}
-//                               </p>
-//                               <p className="text-xs text-gray-500">
-//                                 {it.brand || prod.brand}
-//                               </p>
-//                               <p className="text-xs text-gray-500">
-//                                 Qty: {it.quantity}
-//                               </p>
-//                             </div>
-//                           </div>
-//                           <p className="text-sm font-semibold text-gray-900">
-//                             ${(it.price * it.quantity).toFixed(2)}
-//                           </p>
-//                         </div>
-//                       );
-//                     })
-//                   ) : (
-//                     <p className="text-sm text-gray-500">No items</p>
-//                   )}
-//                 </div>
-//               </div>
-
-//               {/* Shipping */}
-//               <div>
-//                 <h3 className="font-semibold text-gray-800 text-sm mb-3">Shipping</h3>
-//                 <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-700 space-y-1">
-//                   <p>{order.shippingAddress?.fullName}</p>
-//                   <p>{order.shippingAddress?.street}</p>
-//                   <p>
-//                     {order.shippingAddress?.city}, {order.shippingAddress?.state}{' '}
-//                     {order.shippingAddress?.zipCode}
-//                   </p>
-//                   <p>{order.shippingAddress?.country}</p>
-//                   {order.metadata && (
-//                     <p className="text-xs text-gray-500 pt-2">
-//                       Metadata: {JSON.stringify(order.metadata)}
-//                     </p>
-//                   )}
-//                 </div>
-//               </div>
-//             </div>
-//           </div>
-//         );
-//       })}
-//     </div>
-//   );
-// };
-
-// export default Orders;
-
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Cookie from "js-cookie";
@@ -368,6 +178,14 @@ const Orders = () => {
                       <div className="text-sm text-gray-500">
                         {formatDate(order.orderDate || order.createdAt)}
                       </div>
+                       <div className="flex items-center gap-4">
+                      <div className="text-sm text-gray-500">
+                        Payment Method:
+                      </div>
+                      <div className="font-medium text-gray-900">
+                        {order.metadata.paymentInfo?.method || "N/A"}
+                      </div>
+                    </div>
                     </div>
 
                     <div
@@ -380,7 +198,9 @@ const Orders = () => {
                       </span>
                       {order.status?.charAt(0).toUpperCase() +
                         order.status?.slice(1)}
+                        
                     </div>
+                   
                   </div>
                 </div>
               </div>
@@ -483,17 +303,6 @@ const Orders = () => {
                         <div className="text-center text-gray-500">
                           <div className="text-2xl mb-2">📭</div>
                           <p className="text-sm">No shipping address</p>
-                        </div>
-                      )}
-
-                      {order.metadata && (
-                        <div className="mt-4 pt-4 border-t border-green-200">
-                          <div className="text-xs text-gray-600">
-                            <span className="font-medium">Metadata:</span>
-                            <div className="mt-1 p-2 bg-white rounded text-gray-500 font-mono text-xs break-all">
-                              {JSON.stringify(order.metadata, null, 2)}
-                            </div>
-                          </div>
                         </div>
                       )}
                     </div>
