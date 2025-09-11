@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Cookie from 'js-cookie';
 
@@ -8,6 +8,23 @@ const UserDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [user, setUser] = useState(null);
+  const navigate = useNavigate();
+  const [checkingOut, setCheckingOut] = useState(false);
+
+  // Checkout form state (ensure these exist)
+  const [showCheckoutForm, setShowCheckoutForm] = useState(false);
+  const [shippingForm, setShippingForm] = useState({
+    fullName: '',
+    phone: '',
+    street: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    country: ''
+  });
+  const [paymentMethod, setPaymentMethod] = useState('cod'); // cod | card
+  // local validation flag
+  const formValid = Object.values(shippingForm).every(v => String(v || '').trim() !== '');
 
   useEffect(() => {
     // Get user info from cookie
@@ -18,6 +35,17 @@ const UserDashboard = () => {
       if (userCookie) {
         userData = JSON.parse(userCookie);
         setUser(userData);
+        // prefill shipping form when available
+        setShippingForm(prev => ({
+          ...prev,
+          fullName: userData.username || prev.fullName,
+          phone: userData.phone || prev.phone,
+          street: userData.address?.street || prev.street,
+          city: userData.address?.city || prev.city,
+          state: userData.address?.state || prev.state,
+          zipCode: userData.address?.zipCode || prev.zipCode,
+          country: userData.address?.country || prev.country
+        }));
       }
     } catch (e) {
       console.error('Error parsing user cookie:', e);
@@ -119,33 +147,71 @@ const UserDashboard = () => {
     }
   };
 
-  const checkout = async () => {
-    try {
-      const base = import.meta.env.VITE_BACKEND_URL || '';
-      const response = await axios.post(`${base}/api/spareparts/checkout`, {
-        shippingAddress: {
-          street: "123 Main St", // You can add a form for this
-          city: "City",
-          state: "State",
-          zipCode: "12345",
-          country: "Country"
-        },
-        paymentInfo: {
-          method: "cod" // Cash on delivery for now
-        }
-      }, {
-        withCredentials: true
-      });
-      
-      if (response.status === 200) {
-        alert('Order placed successfully!');
-        if (user && user._id) {
-          fetchCart(user._id); // Refresh to show empty cart
-        }
+  // open checkout modal and prefill if possible
+  const openCheckout = () => {
+    if (!user || !user._id) {
+      setError('User not authenticated');
+      return;
+    }
+    if (!cart || !cart.items || cart.items.length === 0) {
+      setError('Cart is empty');
+      return;
+    }
+    setError('');
+    // prefill from user if available
+    setShippingForm(prev => ({
+      ...prev,
+      fullName: user?.username || prev.fullName,
+      phone: user?.phone || prev.phone,
+      street: user?.address?.street || prev.street,
+      city: user?.address?.city || prev.city,
+      state: user?.address?.state || prev.state,
+      zipCode: user?.address?.zipCode || prev.zipCode,
+      country: user?.address?.country || prev.country
+    }));
+    setShowCheckoutForm(true);
+  };
+
+  const handleShippingChange = (e) => {
+    const { name, value } = e.target;
+    setShippingForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const submitCheckout = async (e) => {
+    e?.preventDefault();
+    setError('');
+
+    // client-side required validation
+    const required = ['fullName', 'phone', 'street', 'city', 'state', 'zipCode', 'country'];
+    for (const key of required) {
+      if (!shippingForm[key] || String(shippingForm[key]).trim() === '') {
+        setError('Please complete all shipping fields');
+        return;
       }
-    } catch (error) {
-      console.error('Error during checkout:', error);
-      setError('Failed to place order');
+    }
+
+    try {
+      setCheckingOut(true);
+      const base = import.meta.env.VITE_BACKEND_URL || '';
+      const res = await axios.post(
+        `${base}/api/spareparts/checkout`,
+        { shippingAddress: shippingForm, paymentInfo: { method: paymentMethod } },
+        { withCredentials: true }
+      );
+
+      if (res.status === 200 || res.status === 201) {
+        // refresh cart and navigate to orders
+        await fetchCart(user._id);
+        setShowCheckoutForm(false);
+        navigate('/orders');
+      } else {
+        setError(res.data?.message || 'Checkout failed');
+      }
+    } catch (err) {
+      console.error('Checkout error', err);
+      setError(err.response?.data?.message || err.message || 'Checkout failed');
+    } finally {
+      setCheckingOut(false);
     }
   };
 
@@ -207,6 +273,12 @@ const UserDashboard = () => {
                 className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Browse Products
+              </Link>
+              <Link 
+                to="/orders" 
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                View Order
               </Link>
             </div>
           ) : (
@@ -283,11 +355,19 @@ const UserDashboard = () => {
                 
                 <div className="flex gap-3">
                   <button
-                    onClick={checkout}
+                    type='button'
+                    onClick={openCheckout}
+                    disabled={checkingOut}
                     className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
                   >
-                    Proceed to Checkout
+                    {checkingOut ? 'Processing...' : 'Proceed to Checkout'}
                   </button>
+                                <Link 
+                to="/orders" 
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                View Order
+              </Link>
                   <Link
                     to="/"
                     className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-center"
@@ -327,6 +407,58 @@ const UserDashboard = () => {
           <p className="text-gray-600 text-sm">Compare your saved products</p>
         </Link>
       </div>
+
+      {/* Checkout Form Modal */}
+      {showCheckoutForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg w-full max-w-2xl p-6 mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Shipping & Payment</h3>
+              <button className="text-gray-600" onClick={() => setShowCheckoutForm(false)}>✕</button>
+            </div>
+
+            <form onSubmit={submitCheckout} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input name="fullName" value={shippingForm.fullName} onChange={handleShippingChange} placeholder="Full name" className="w-full p-2 border rounded" required />
+                <input name="phone" value={shippingForm.phone} onChange={handleShippingChange} placeholder="Phone" className="w-full p-2 border rounded" required />
+              </div>
+
+              <input name="street" value={shippingForm.street} onChange={handleShippingChange} placeholder="Street address" className="w-full p-2 border rounded" required />
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <input name="city" value={shippingForm.city} onChange={handleShippingChange} placeholder="City" className="w-full p-2 border rounded" required />
+                <input name="state" value={shippingForm.state} onChange={handleShippingChange} placeholder="State" className="w-full p-2 border rounded" required />
+                <input name="zipCode" value={shippingForm.zipCode} onChange={handleShippingChange} placeholder="ZIP / Postal code" className="w-full p-2 border rounded" required />
+              </div>
+
+              <input name="country" value={shippingForm.country} onChange={handleShippingChange} placeholder="Country" className="w-full p-2 border rounded" required />
+
+              <div>
+                <div className="text-sm font-medium mb-2">Payment method</div>
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2">
+                    <input type="radio" name="payment" checked={paymentMethod === 'cod'} onChange={() => setPaymentMethod('cod')} />
+                    <span className="text-sm">Cash on delivery</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input type="radio" name="payment" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} />
+                    <span className="text-sm">Card (placeholder)</span>
+                  </label>
+                </div>
+              </div>
+
+              {error && <div className="text-sm text-red-600">{error}</div>}
+
+              <div className="flex gap-3 justify-end">
+                <button type="button" onClick={() => setShowCheckoutForm(false)} className="px-4 py-2 border rounded">Cancel</button>
+                <button type="submit" disabled={checkingOut || !formValid} className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50">
+                  {checkingOut ? 'Processing...' : 'Place order'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

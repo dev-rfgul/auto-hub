@@ -11,6 +11,7 @@ import adminRoutes from './routes/admin.routes.js';
 import storeRoutes from './routes/store.routes.js';
 import productRoutes from './routes/product.routes.js';
 import sparePartRoutes from './routes/sparePart.routes.js';
+import orderRoutes from './routes/order.routes.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -40,6 +41,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/store',storeRoutes);
 app.use('/api/product',productRoutes);
 app.use('/api/spareparts', sparePartRoutes);
+app.use('/api/orders', orderRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
