@@ -9,6 +9,7 @@ const formatAddress = (address) => {
 
 const StoreOrder = ({ storeId }) => {
   const [orders, setOrders] = useState([]);
+  const [updating, setUpdating] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -62,8 +63,41 @@ const StoreOrder = ({ storeId }) => {
                     <div className="text-lg font-medium">Order #{order._id}</div>
                     <div className="text-sm text-gray-500">{new Date(order.createdAt || order.orderDate || order.updatedAt).toLocaleString()}</div>
                   </div>
-                  <div className="text-sm">
+                  <div className="text-sm flex items-center space-x-2">
                     <span className="px-2 py-1 rounded bg-yellow-100 text-yellow-800">{order.status}</span>
+                    <select
+                      value={order.status}
+                      onChange={async (e) => {
+                        const newStatus = e.target.value;
+                        try {
+                          setUpdating((s) => ({ ...s, [order._id]: true }));
+                          const base = import.meta.env.VITE_BACKEND_URL || '';
+                          const res = await fetch(`${base}/api/orders/updateOrderStatus/${order._id}`, {
+                            method: 'PATCH',
+                            credentials: 'include',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: newStatus }),
+                          });
+                          if (!res.ok) throw new Error(`Status ${res.status}`);
+                          const updated = await res.json();
+                          setOrders((prev) => prev.map((o) => (o._id === updated._id ? updated : o)));
+                        } catch (err) {
+                          console.error('Failed to update order status', err);
+                          // optionally show a toast or setError
+                        } finally {
+                          setUpdating((s) => ({ ...s, [order._id]: false }));
+                        }
+                      }}
+                      className="ml-2 border rounded px-2 py-1 text-sm"
+                      disabled={!!updating[order._id]}
+                    >
+                      <option value="pending">pending</option>
+                      <option value="processing">processing</option>
+                      <option value="shipped">shipped</option>
+                      <option value="completed">completed</option>
+                      <option value="cancelled">cancelled</option>
+                    </select>
+                    {updating[order._id] && <span className="text-xs text-gray-500">Updating...</span>}
                   </div>
                 </div>
 
