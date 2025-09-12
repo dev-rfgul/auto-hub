@@ -8,7 +8,7 @@ import StoreSignup from "./Pages/StoreSignup";
 import ProductUpload from "./Pages/ProductUpload";
 import LoginUser from "./Pages/LoginUser";
 import DealerHome from "./Pages/DealerHome";
-import StoreHome from "./Pages/StoreHome";
+import StoreHome from "./Pages/store/StoreHome";
 import ProductPreview from "./Pages/ProductPreview";
 import Home from "./Pages/Home";
 import UserDashboard from "./Pages/UserDashboard";
