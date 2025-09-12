@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import Dealers from './Dealers'
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dealers");
-  const [dealers, setDealers] = useState([]);
-  const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [stores, setStores] = useState([]);
   const [actionLoading, setActionLoading] = useState(null);
   const [error, setError] = useState(null);
 
@@ -43,46 +43,13 @@ const AdminDashboard = () => {
     return parts.join(" • ");
   };
 
-  const fetchDealers = async () => {
-    try {
-      const res = await fetch(`${base}/api/admin/getAllDealers`, {
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed to fetch dealers");
-      const data = await res.json();
-      console.log(data)
-      setDealers(data.dealers || data || []);
-    } catch (err) {
-      console.warn("fetchDealers error", err);
-      setError("Could not load dealers. Showing sample data.");
-      setDealers([
-        {
-          _id: "d1",
-          username: "dealer1",
-          email: "deal1@example.com",
-          phone: "123",
-          isVerified: false,
-        },
-        {
-          _id: "d2",
-          username: "dealer2",
-          email: "deal2@example.com",
-          phone: "456",
-          isVerified: true,
-        },
-      ]);
-    }
-  };
-
   const fetchStores = async () => {
     try {
       const res = await axios.get(`${base}/api/admin/getAllStores`, {
         withCredentials: true,
       });
-      console.log(res);
       if (res.status !== 200) throw new Error("Failed to fetch stores");
       const data = res.data;
-      console.log(data);
       setStores(data.stores || data || []);
     } catch (err) {
       console.warn("fetchStores error", err);
@@ -109,25 +76,14 @@ const AdminDashboard = () => {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      await Promise.all([fetchDealers(), fetchStores()]);
+  await fetchStores();
       setLoading(false);
     };
     load();
   }, []);
 
   // helpers to categorize (dealer fields are nested under d.dealer)
-  const dealersVerified = dealers.filter(
-    (d) => d.dealer?.verificationStatus === "verified" || d.isVerified === true
-  );
-  const dealersPending = dealers.filter(
-    (d) =>
-      (d.dealer?.verificationStatus === "pending" ||
-        d.dealer?.verificationStatus === undefined) &&
-      d.isVerified !== true
-  );
-  const dealersRejected = dealers.filter(
-    (d) => d.dealer?.verificationStatus === "rejected"
-  );
+  // Removed dealer-related filtering logic
 
   // backend returns `approvalStatus` for stores (pending|approved|rejected)
   const storesVerified = stores.filter((s) => s.approvalStatus === "approved");
@@ -143,8 +99,7 @@ const AdminDashboard = () => {
       const res=await axios.post(`${base}/api/admin/verify-${resource}/${id}/${action}`,{},{withCredentials: true})
       console.log(res)
       // refetch the affected list so front-end stays in sync
-      if (resource.includes("dealer")) await fetchDealers();
-      if (resource.includes("store")) await fetchStores();
+  if (resource.includes("store")) await fetchStores();
     } catch (err) {
       console.error("admin action error", err);
       setError("Action failed; try again");
@@ -226,141 +181,8 @@ const AdminDashboard = () => {
               )}
 
               {activeTab === "dealers" && (
-                <div className="space-y-6">
-                  <section>
-                    <h2 className="text-lg font-semibold text-gray-800 mb-3">
-                      Pending Dealers
-                    </h2>
-                    {dealersPending.length === 0 ? (
-                      <div className="text-sm text-gray-500">
-                        No pending dealers
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 gap-4">
-                        {dealersPending.map((d) => (
-                          <div
-                            key={d._id}
-                            className="flex items-center justify-between p-4 border rounded"
-                          >
-                            <div>
-                              <div className="font-medium text-gray-900">
-                                {d.dealer?.name || d.email}
-                              </div>
-                              <div className="text-sm text-gray-600">
-                                {d.email}
-                              </div>
-                              <div className="text-sm text-gray-600">
-                                {d.dealer?.cnic}
-                              </div>
-                              <div className="text-sm text-gray-600">
-                                {d.phone}
-                              </div>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <button
-                                disabled={actionLoading === d._id}
-                                onClick={() =>
-                                  performAction({
-                                    action: "verified",
-                                    resource: "dealer",
-                                    id: d._id,
-                                  })
-                                }
-                                className="px-3 py-1 bg-green-600 text-white rounded text-sm"
-                              >
-                                {actionLoading === d._id ? "..." : "Verify"}
-                              </button>
-                              <button
-                                disabled={actionLoading === d._id}
-                                onClick={() =>
-                                  performAction({
-                                    action: "rejected",
-                                    resource: "dealer",
-                                    id: d._id,
-                                  })
-                                }
-                                className="px-3 py-1 bg-red-600 text-white rounded text-sm"
-                              >
-                                {actionLoading === d._id ? "..." : "Reject"}
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </section>
-
-                  <section>
-                    <h2 className="text-lg font-semibold text-gray-800 mb-3">
-                      Verified Dealers
-                    </h2>
-                    {dealersVerified.length === 0 ? (
-                      <div className="text-sm text-gray-500">
-                        No verified dealers
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 gap-4">
-                        {dealersVerified.map((d) => (
-                          <div
-                            key={d._id}
-                            className="flex items-center justify-between p-4 border rounded"
-                          >
-                            <div>
-                              <div className="font-medium text-gray-900">
-                                {d.dealer?.name || d.email}
-                              </div>
-                              <div className="text-sm text-gray-600">
-                                {d.email}
-                              </div>
-                              <div className="text-sm text-gray-600">
-                                {d.dealer?.cnic}
-                              </div>
-                              <div className="text-sm text-gray-600">
-                                {d.phone}
-                              </div>
-                            </div>
-                            <div
-                              className="text-sm px-2 py-1 rounded text-white"
-                              style={{ background: "#10b981" }}
-                            >
-                              Verified
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </section>
-
-                  {dealersRejected.length > 0 && (
-                    <section>
-                      <h2 className="text-lg font-semibold text-gray-800 mb-3">
-                        Rejected Dealers
-                      </h2>
-                      <div className="grid grid-cols-1 gap-4">
-                        {dealersRejected.map((d) => (
-                          <div
-                            key={d._id}
-                            className="flex items-center justify-between p-4 border rounded"
-                          >
-                            <div>
-                              <div className="font-medium text-gray-900">
-                                {d.dealer?.name || d.email}
-                              </div>
-                              <div className="text-sm text-gray-600">
-                                {d.email}
-                              </div>
-                            </div>
-                            <div
-                              className="text-sm px-2 py-1 rounded text-white"
-                              style={{ background: "#ef4444" }}
-                            >
-                              Rejected
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </section>
-                  )}
+                <div>
+                  <Dealers />
                 </div>
               )}
 

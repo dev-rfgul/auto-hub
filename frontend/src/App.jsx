@@ -3,7 +3,7 @@ import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import Cookie from "js-cookie";
 import Navbar from "./components/Navbar";
 import Signup from "./Pages/Signup";
-import AdminDashboard from "./Pages/AdminDashboard";
+import AdminDashboard from "./Pages/admin/AdminDashboard";
 import StoreSignup from "./Pages/StoreSignup";
 import ProductUpload from "./Pages/ProductUpload";
 import LoginUser from "./Pages/LoginUser";
