@@ -10,6 +10,7 @@ const formatAddress = (address) => {
 const StoreOrder = ({ storeId }) => {
   const [orders, setOrders] = useState([]);
   const [updating, setUpdating] = useState({});
+  const [selectedOrder, setSelectedOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -64,6 +65,13 @@ const StoreOrder = ({ storeId }) => {
                     <div className="text-sm text-gray-500">{new Date(order.createdAt || order.orderDate || order.updatedAt).toLocaleString()}</div>
                   </div>
                   <div className="text-sm flex items-center space-x-2">
+                    <button
+                      onClick={() => setSelectedOrder(order)}
+                      className="px-3 py-1 bg-blue-600 text-white rounded text-sm"
+                    >
+                      View
+                    </button>
+                  
                     <span className="px-2 py-1 rounded bg-yellow-100 text-yellow-800">{order.status}</span>
                     <select
                       value={order.status}
@@ -128,6 +136,53 @@ const StoreOrder = ({ storeId }) => {
           })}
         </div>
       )}
+
+        {/* Order details modal */}
+        {selectedOrder && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white rounded-lg max-w-2xl w-full p-6 mx-4">
+              <div className="flex justify-between items-start">
+                <h3 className="text-lg font-semibold">Order Details — #{selectedOrder._id}</h3>
+                <button onClick={() => setSelectedOrder(null)} className="text-gray-500 hover:text-gray-800">Close</button>
+              </div>
+
+              <div className="mt-4 space-y-3 text-sm text-gray-700">
+                <div>
+                  <div className="font-medium">Customer</div>
+                  <div>{selectedOrder.userId || (selectedOrder.user && selectedOrder.user.name) || 'N/A'}</div>
+                  <div className="text-xs text-gray-500">{selectedOrder.user && selectedOrder.user.email}</div>
+                </div>
+
+                <div>
+                  <div className="font-medium">Shipping Address</div>
+                  <div>{formatAddress(selectedOrder.shippingAddress || selectedOrder.shipping)}</div>
+                </div>
+
+                <div>
+                  <div className="font-medium">Items</div>
+                  <div className="mt-2 space-y-2">
+                    {(selectedOrder.items || [])
+                      .filter((it) => String(it.storeId) === String(storeId) || (it.store && String(it.store._id) === String(storeId)))
+                      .map((it) => (
+                        <div key={it._id || it.sparePartId || it.sparePart} className="flex items-center justify-between">
+                          <div>
+                            <div className="font-medium">{it.name || (it.sparePart && it.sparePart.name) || 'Item'}</div>
+                            <div className="text-xs text-gray-500">Qty: {it.quantity || 1}</div>
+                          </div>
+                          <div className="font-semibold">${((it.price || 0) * (it.quantity || 1)).toFixed(2)}</div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t flex items-center justify-between">
+                  <div className="text-sm text-gray-600">Order status: <span className="font-medium">{selectedOrder.status}</span></div>
+                  <div className="text-lg font-bold">Total: ${(selectedOrder.totalAmount || selectedOrder.total || 0).toFixed(2)}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   );
 };
