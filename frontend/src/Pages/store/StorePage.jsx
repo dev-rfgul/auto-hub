@@ -58,15 +58,15 @@ const StoreHome = () => {
   <StoreBanner store={store} storeId={id} />
 
 
+        {/* Orders (delegated) */}
+        <div className="mt-12">
+          <StoreOrder storeId={id} />
+        </div>
         {/* Products (delegated) */}
         <div>
           <StoreProduct storeId={id} />
         </div>
 
-        {/* Orders (delegated) */}
-        <div className="mt-12">
-          <StoreOrder storeId={id} />
-        </div>
       </div>
     </div>
   );
