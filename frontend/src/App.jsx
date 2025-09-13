@@ -7,7 +7,7 @@ import AdminDashboard from "./Pages/admin/AdminDashboard";
 import StoreSignup from "./signup/StoreSignup";
 import ProductUpload from "./Pages/ProductUpload";
 import LoginUser from "./signup/LoginUser";
-import DealerHome from "./Pages/DealerHome";
+import DealerHome from "./dealer/DealerHome";
 import StoreHome from "./Pages/store/StorePage";
 import ProductPreview from "./Pages/ProductPreview";
 import Home from "./Pages/Home";
