@@ -4,14 +4,40 @@ import Cookie from "js-cookie";
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const location = useLocation();
-  const userCookie = Cookie.get("user");
-  // try parse cookie if present
-  let user = null;
-  try {
-    user = userCookie ? JSON.parse(userCookie) : null;
-  } catch (e) {
-    user = null;
-  }
+  const [user, setUser] = useState(null);
+  const base = import.meta.env.VITE_BACKEND_URL || '';
+
+  // try parse cookie first (local dev / same-origin). If not present, call backend /me endpoint (production when cookie is set on API domain)
+  useEffect(() => {
+    const load = async () => {
+      const userCookie = Cookie.get('user');
+      let parsed = null;
+      try {
+        parsed = userCookie ? JSON.parse(userCookie) : null;
+      } catch (e) {
+        parsed = null;
+      }
+      if (parsed) {
+        setUser(parsed);
+        return;
+      }
+
+      // fallback to calling API /me to detect logged-in user (requires backend /api/user/me)
+      try {
+        const res = await fetch(`${base}/api/user/me`, { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          setUser(data);
+          return;
+        }
+      } catch (err) {
+        // ignore
+      }
+      setUser(null);
+    };
+    load();
+  }, []);
+
   console.log("User Cookie in Navbar:", user);
   const role = user?.role || null;
   const dashboardPath = role === 'dealer' ? '/dealer-dashboard' : role === 'admin' ? '/admin-panel' : '/user-dashboard';
@@ -45,7 +71,7 @@ const Navbar = () => {
 
           {/* Desktop links */}
           <div className="hidden md:flex items-center space-x-4">
-            {!userCookie ? (
+            {!user ? (
               <>
                 {location.pathname !== "/signup" && (
                   <Link to="/user-signup" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Sign Up</Link>
@@ -89,7 +115,7 @@ const Navbar = () => {
       {open && (
         <div className="md:hidden border-t bg-white">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            {!userCookie ? (
+            {!user ? (
               <>
                 {location.pathname !== "/signup" && (
                   <Link to="/user-signup" onClick={() => setOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">Sign Up</Link>
