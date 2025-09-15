@@ -30,22 +30,20 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'Failed to register user' });
     }
 
-    // Set cookies to send to frontend
-    const cookieOptions = {
-      // httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-    };
-
-    // httpOnly cookie with user id (for server-side auth)
-    res.cookie('user', newUser.toString(), cookieOptions);
-
-
-
     // Return user without password
     const userSafe = newUser.toObject();
     delete userSafe.password;
+
+    // Set cookies to send to frontend (stringified JSON so frontend can parse)
+    const cookieOptions = {
+      // httpOnly: true, // consider enabling for security and using a /me endpoint instead of reading cookies in client JS
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    };
+
+    // set cookie with JSON string so client-side parsing works
+    res.cookie('user', JSON.stringify(userSafe), cookieOptions);
 
     return res.status(201).json(userSafe);
   } catch (err) {
@@ -77,10 +75,10 @@ export const loginUser = async (req, res) => {
 
     // on successful login, set same cookies as registration
     const cookieOptions = {
-      // httpOnly: true,
-      secure: 'true',
-      sameSite: 'none',
-      maxAge: 30 * 24 * 60 * 60 * 1000, 
+      // httpOnly: true, // enable this for improved security and use a /me endpoint to fetch user in client
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000,
     };
 
     const userSafe = user.toObject();
@@ -108,3 +106,22 @@ export const getUser=async(req,res)=>{
     return res.status(500).json({ message: 'Error fetching user', error: err.message || err });
   }
 }
+
+export const getMe = async (req, res) => {
+  try {
+    // cookie 'user' set as JSON string by login/register
+    const raw = req.cookies && req.cookies.user;
+    if (!raw) return res.status(401).json({ message: 'Not authenticated' });
+    let parsed = null;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (e) {
+      // if cookie is not JSON, return it raw
+      parsed = raw;
+    }
+    return res.status(200).json(parsed);
+  } catch (err) {
+    console.error('getMe error', err);
+    return res.status(500).json({ message: 'Error fetching current user', error: err.message || err });
+  }
+};

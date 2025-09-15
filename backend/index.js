@@ -14,6 +14,8 @@ import sparePartRoutes from './routes/sparePart.routes.js';
 import orderRoutes from './routes/order.routes.js';
 
 const app = express();
+// if behind a proxy (Vercel, Heroku), trust first proxy so secure cookies work
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 
 // add cors and cors options
