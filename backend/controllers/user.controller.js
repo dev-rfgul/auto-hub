@@ -78,8 +78,8 @@ export const loginUser = async (req, res) => {
     // on successful login, set same cookies as registration
     const cookieOptions = {
       // httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: 'true',
+      sameSite: 'none',
       maxAge: 30 * 24 * 60 * 60 * 1000, 
     };
 
