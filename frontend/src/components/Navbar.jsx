@@ -7,22 +7,9 @@ const Navbar = () => {
   const [user, setUser] = useState(null);
   const base = import.meta.env.VITE_BACKEND_URL || '';
 
-  // try parse cookie first (local dev / same-origin). If not present, call backend /me endpoint (production when cookie is set on API domain)
+  // fetch user from backend /api/user/me (works in production when cookies are on API domain)
   useEffect(() => {
     const load = async () => {
-      const userCookie = Cookie.get('user');
-      let parsed = null;
-      try {
-        parsed = userCookie ? JSON.parse(userCookie) : null;
-      } catch (e) {
-        parsed = null;
-      }
-      if (parsed) {
-        setUser(parsed);
-        return;
-      }
-
-      // fallback to calling API /me to detect logged-in user (requires backend /api/user/me)
       try {
         const res = await fetch(`${base}/api/user/me`, { credentials: 'include' });
         if (res.ok) {
@@ -31,12 +18,20 @@ const Navbar = () => {
           return;
         }
       } catch (err) {
-        // ignore
+        console.warn('Failed to fetch user:', err);
       }
-      setUser(null);
+      
+      // fallback: try cookie (for local dev)
+      try {
+        const userCookie = Cookie.get('user');
+        const parsed = userCookie ? JSON.parse(userCookie) : null;
+        setUser(parsed);
+      } catch (e) {
+        setUser(null);
+      }
     };
     load();
-  }, []);
+  }, [base]);
 
   console.log("User Cookie in Navbar:", user);
   const role = user?.role || null;
