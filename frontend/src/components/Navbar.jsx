@@ -9,30 +9,45 @@ const Navbar = () => {
 
   // fetch user from backend /api/user/me (works in production when cookies are on API domain)
   useEffect(() => {
+    const controller = new AbortController();
     const load = async () => {
       try {
-        const res = await fetch(`${base}/api/user/me`, { credentials: 'include' });
-        if (res.ok) {
+        const res = await fetch(`${base}/api/user/me`, {
+          credentials: 'include',
+          signal: controller.signal,
+        });
+        if (res.status === 200) {
           const data = await res.json();
           setUser(data);
           return;
         }
+        if (res.status === 401) {
+          // not logged in
+          setUser(null);
+          return;
+        }
+        // other non-OK -> fallback to cookie
       } catch (err) {
-        console.warn('Failed to fetch user:', err);
+        if (err.name !== 'AbortError') {
+          // network error or CORS issue -> fallback to cookie
+        }
       }
-      
-      // fallback: try cookie (for local dev)
+
+      // fallback: try cookie (useful for local dev or if cookie set on frontend origin)
       try {
         const userCookie = Cookie.get('user');
         const parsed = userCookie ? JSON.parse(userCookie) : null;
         setUser(parsed);
-      } catch (e) {
+      } catch {
         setUser(null);
       }
     };
+
     load();
+    return () => controller.abort();
   }, [base]);
 
+  // do not log user in production
   console.log("User Cookie in Navbar:", user);
   const role = user?.role || null;
   const dashboardPath = role === 'dealer' ? '/dealer-dashboard' : role === 'admin' ? '/admin-panel' : '/user-dashboard';
