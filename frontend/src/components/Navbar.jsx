@@ -8,38 +8,41 @@ const Navbar = () => {
   const base = import.meta.env.VITE_BACKEND_URL || '';
 
   // fetch user from backend /api/user/me (same logic as App.jsx)
-  useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const res = await fetch(`${base}/api/user/me`, { credentials: 'include' });
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data);
-          return;
-        } else {
-          // fallback: try cookie (works for local setups where cookie is client-visible)
-          const userCookie = Cookie.get('user');
-          let parsed = null;
-          try {
-            parsed = userCookie ? JSON.parse(userCookie) : null;
-          } catch (e) {
-            parsed = null;
-          }
-          setUser(parsed);
-        }
-      } catch (err) {
-        console.warn('Could not load /me in Navbar:', err);
-        const userCookie = Cookie.get('user');
-        let parsed = null;
-        try {
-          parsed = userCookie ? JSON.parse(userCookie) : null;
-        } catch (e) {
-          parsed = null;
-        }
-        setUser(parsed);
+  const loadUser = async () => {
+    try {
+      const res = await fetch(`${base}/api/user/me`, { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data);
+        return;
       }
-    };
+      // fallback: try cookie (works for local setups where cookie is client-visible)
+      const userCookie = Cookie.get('user');
+      let parsed = null;
+      try {
+        parsed = userCookie ? JSON.parse(userCookie) : null;
+      } catch (e) {
+        parsed = null;
+      }
+      setUser(parsed);
+    } catch (err) {
+      console.warn('Could not load /me in Navbar:', err);
+      const userCookie = Cookie.get('user');
+      let parsed = null;
+      try {
+        parsed = userCookie ? JSON.parse(userCookie) : null;
+      } catch (e) {
+        parsed = null;
+      }
+      setUser(parsed);
+    }
+  };
+
+  useEffect(() => {
     loadUser();
+    const onAuth = () => loadUser();
+    window.addEventListener('authChanged', onAuth);
+    return () => window.removeEventListener('authChanged', onAuth);
   }, [base]);
   const role = user?.role || null;
   const dashboardPath = role === 'dealer' ? '/dealer-dashboard' : role === 'admin' ? '/admin-panel' : '/user-dashboard';
@@ -51,9 +54,10 @@ const Navbar = () => {
     }
     // remove client cookie fallback and reset user
     Cookie.remove('user');
-    setUser(null);
-    // redirect to home
-    window.location.href = '/';
+  setUser(null);
+  // notify other parts of app and redirect to home
+  window.dispatchEvent(new Event('authChanged'));
+  window.location.href = '/';
   };
   // close mobile menu on navigation change
   useEffect(() => {
