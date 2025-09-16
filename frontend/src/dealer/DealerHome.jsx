@@ -24,23 +24,30 @@ const DealerHome = () => {
     const fetchLatestUser = async () => {
       try {
         const base = import.meta.env.VITE_BACKEND_URL || "";
-        // Get user id from cookie
+        // First try the authenticated /me endpoint on the backend. This works
+        // when the backend sets httpOnly cookies (production behind proxy).
+        try {
+          const res = await axios.get(`${base}/api/user/me`, { withCredentials: true });
+          if (res && res.data) {
+            Cookie.set("user", JSON.stringify(res.data));
+            setDealer(res.data);
+            return;
+          }
+        } catch (meErr) {
+          // /me may return 401 when not authenticated or CORS/preflight fails.
+          // We'll fall back to reading the client-visible cookie below.
+        }
+
+        // Fallback: if /me did not return a user, try the client cookie (useful
+        // for local dev or cases where cookie is available on frontend origin).
         const userCookie = Cookie.get("user");
         let user = null;
-        let userId = null;
         try {
           user = userCookie ? JSON.parse(userCookie) : null;
-          userId = user?._id;
         } catch (e) {
           user = null;
         }
-        if (!userId) {
-          setDealer(user);
-          return;
-        }
-        const res = await axios.get(`${base}/api/user/user/${userId}`, { withCredentials: true });
-        Cookie.set("user", JSON.stringify(res.data));
-        setDealer(res.data);
+        if (user) setDealer(user);
       } catch (e) {
         // fallback to cookie if API fails
         const userCookie = Cookie.get("user");
@@ -50,7 +57,11 @@ const DealerHome = () => {
         } catch (e) {
           user = null;
         }
-        setDealer(user);
+        if (user) setDealer(user);
+        console.warn('DealerHome: fetchLatestUser error', e);
+      } finally {
+        // always turn off loading once we've attempted to resolve the dealer
+        setLoading(false);
       }
     };
     fetchLatestUser();
@@ -104,7 +115,17 @@ const DealerHome = () => {
     fetchStores();
   }, [dealer]);
 
-  // Conditional rendering
+  // Show loading before we decide dealer presence
+  if (loading) {
+    return (
+      <div className="p-8">
+        <h2 className="text-xl font-semibold mb-4">Dealer Dashboard</h2>
+        <p className="text-gray-500">Loading dealer information...</p>
+      </div>
+    );
+  }
+
+  // Conditional rendering: if no dealer data or missing nested dealer object
   if (!dealer || !dealer.dealer) {
     return (
       <div className="p-8">
