@@ -7,48 +7,40 @@ const Navbar = () => {
   const [user, setUser] = useState(null);
   const base = import.meta.env.VITE_BACKEND_URL || '';
 
-  // fetch user from backend /api/user/me (works in production when cookies are on API domain)
+  // fetch user from backend /api/user/me (same logic as App.jsx)
   useEffect(() => {
-    const controller = new AbortController();
-    const load = async () => {
+    const loadUser = async () => {
       try {
-        const res = await fetch(`${base}/api/user/me`, {
-          credentials: 'include',
-          signal: controller.signal,
-        });
-        if (res.status === 200) {
+        const res = await fetch(`${base}/api/user/me`, { credentials: 'include' });
+        if (res.ok) {
           const data = await res.json();
           setUser(data);
           return;
+        } else {
+          // fallback: try cookie (works for local setups where cookie is client-visible)
+          const userCookie = Cookie.get('user');
+          let parsed = null;
+          try {
+            parsed = userCookie ? JSON.parse(userCookie) : null;
+          } catch (e) {
+            parsed = null;
+          }
+          setUser(parsed);
         }
-        if (res.status === 401) {
-          // not logged in
-          setUser(null);
-          return;
-        }
-        // other non-OK -> fallback to cookie
       } catch (err) {
-        if (err.name !== 'AbortError') {
-          // network error or CORS issue -> fallback to cookie
-        }
-      }
-
-      // fallback: try cookie (useful for local dev or if cookie set on frontend origin)
-      try {
+        console.warn('Could not load /me in Navbar:', err);
         const userCookie = Cookie.get('user');
-        const parsed = userCookie ? JSON.parse(userCookie) : null;
+        let parsed = null;
+        try {
+          parsed = userCookie ? JSON.parse(userCookie) : null;
+        } catch (e) {
+          parsed = null;
+        }
         setUser(parsed);
-      } catch {
-        setUser(null);
       }
     };
-
-    load();
-    return () => controller.abort();
+    loadUser();
   }, [base]);
-
-  // do not log user in production
-  console.log("User Cookie in Navbar:", user);
   const role = user?.role || null;
   const dashboardPath = role === 'dealer' ? '/dealer-dashboard' : role === 'admin' ? '/admin-panel' : '/user-dashboard';
   // close mobile menu on navigation change
