@@ -43,6 +43,18 @@ const Navbar = () => {
   }, [base]);
   const role = user?.role || null;
   const dashboardPath = role === 'dealer' ? '/dealer-dashboard' : role === 'admin' ? '/admin-panel' : '/user-dashboard';
+  const logout = async () => {
+    try {
+      await fetch(`${base}/api/user/logout`, { method: 'POST', credentials: 'include' });
+    } catch (err) {
+      console.warn('Logout request failed', err);
+    }
+    // remove client cookie fallback and reset user
+    Cookie.remove('user');
+    setUser(null);
+    // redirect to home
+    window.location.href = '/';
+  };
   // close mobile menu on navigation change
   useEffect(() => {
     setOpen(false);
@@ -83,7 +95,10 @@ const Navbar = () => {
                 )}
               </>
             ) : (
-              <Link to={dashboardPath} className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Account</Link>
+              <>
+                <Link to={dashboardPath} className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Account</Link>
+                <button onClick={logout} className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Logout</button>
+              </>
             )}
             {location.pathname !== "/" && (
               <Link to="/" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Home</Link>
