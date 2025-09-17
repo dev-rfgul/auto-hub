@@ -3,6 +3,6 @@ import express from 'express';
 import { getAIResponseHandler } from '../chatbot/aiResponseController.js';
 const router = express.Router();
 
-router.get('/ai-response', getAIResponseHandler); // use GET for prompt in query
+router.post('/ai-response', getAIResponseHandler); // use GET for prompt in query
 
 export default router;

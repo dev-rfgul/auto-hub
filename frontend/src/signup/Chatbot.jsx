@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import axios from 'axios';
 
 const botWelcome = {
   role: 'bot',
@@ -39,19 +40,24 @@ const Chatbot = () => {
     setMessages((m) => [...m, userMsg]);
     setInput('');
     setLoading(true);
-
     try {
-      await new Promise((r) => setTimeout(r, 700));
-      const botReply = {
-        role: 'bot',
-        text: `I looked that up for you: "${text.trim()}" — this is a demo reply.`,
-        ts: Date.now(),
-      };
+      const base = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+      const url = `${base.replace(/\/$/, '')}/api/chatbot/ai-response`;
+      console.log('Chatbot calling URL:', url);
+
+  const res = await axios.post(url, { prompt: text.trim() });
+      const data = res.data;
+      console.log('Chatbot response data:', data);
+
+      const botText = data && data.response ? data.response : 'Sorry, no reply from server.';
+      const botReply = { role: 'bot', text: botText, ts: Date.now() };
       setMessages((m) => [...m, botReply]);
     } catch (err) {
+      console.error('Chatbot error:', err);
+      const serverMessage = err?.response?.data?.message || err?.response?.data || err.message;
       setMessages((m) => [
         ...m,
-        { role: 'bot', text: 'Sorry, something went wrong.', ts: Date.now() },
+        { role: 'bot', text: `Error: ${serverMessage}`, ts: Date.now() },
       ]);
     } finally {
       setLoading(false);
