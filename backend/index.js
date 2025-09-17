@@ -12,6 +12,7 @@ import storeRoutes from './routes/store.routes.js';
 import productRoutes from './routes/product.routes.js';
 import sparePartRoutes from './routes/sparePart.routes.js';
 import orderRoutes from './routes/order.routes.js';
+import chatbotRoutes from './routes/chatbot.routes.js';
 
 const app = express();
 // if behind a proxy (Vercel, Heroku), trust first proxy so secure cookies work
@@ -44,6 +45,7 @@ app.use('/api/store',storeRoutes);
 app.use('/api/product',productRoutes);
 app.use('/api/spareparts', sparePartRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/chatbot', chatbotRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
