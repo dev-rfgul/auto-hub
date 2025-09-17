@@ -40,7 +40,7 @@ Your job:
                     parts: [{ text: combined }]
                 }],
                 generationConfig: {
-                    maxOutputTokens: 400,
+                    maxOutputTokens: 1400,
                     temperature: 0.2
                 }
             }),
