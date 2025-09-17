@@ -74,6 +74,33 @@ const Chatbot = () => {
     setOpen(true);
   };
 
+  // very small sanitizer + markdown-lite renderer
+  const escapeHtml = (unsafe) => {
+    return unsafe
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  };
+
+  const renderMessageAsHTML = (text) => {
+    if (!text) return '';
+    // escape first
+    let out = escapeHtml(text);
+    // paragraphs / line breaks
+    out = out.split(/\n\n+/).map(p => `<p>${p.replace(/\n/g, '<br/>')}</p>`).join('');
+    // bold **text**
+    out = out.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    // italics *text*
+    out = out.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    // ordered lists starting with numbers
+    out = out.replace(/(?:<p>)?\s*\d+\.\s+(.*?)(?:<\/p>)?/g, '<ol><li>$1</li></ol>');
+    // unordered lists - lines starting with - or *
+    out = out.replace(/(?:<p>)?\s*[-\*]\s+(.*?)(?:<\/p>)?/g, '<ul><li>$1</li></ul>');
+    return out;
+  };
+
   return (
     <div>
       {/* Floating button */}
@@ -176,7 +203,11 @@ const Chatbot = () => {
                           : 'bg-blue-600 text-white'
                       } px-3 py-2 rounded-lg max-w-[80%]`}
                     >
-                      <div className="text-sm">{m.text}</div>
+                      {m.role === 'bot' ? (
+                        <div className="text-sm" dangerouslySetInnerHTML={{ __html: renderMessageAsHTML(m.text) }} />
+                      ) : (
+                        <div className="text-sm">{m.text}</div>
+                      )}
                     </div>
                   </div>
                 ))}
