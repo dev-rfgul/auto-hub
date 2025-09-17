@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { CompareModal } from './Compare';
 
@@ -34,6 +34,7 @@ const ProductPreview = ({ product: initialProduct = null }) => {
   const { id } = useParams();
   console.log(id)
   const [product, setProduct] = useState(initialProduct);
+  const navigate = useNavigate();
   const [selectedImage, setSelectedImage] = useState((initialProduct && initialProduct.images && initialProduct.images[0]) || null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -116,6 +117,15 @@ const ProductPreview = ({ product: initialProduct = null }) => {
       console.error('Error adding to cart:', error);
       const errorMsg = error.response?.data?.message || 'Failed to add to cart';
       setCartMessage(`❌ ${errorMsg}`);
+      // if authentication related error, redirect to login
+      const status = error.response?.status;
+      const lower = String(errorMsg).toLowerCase();
+      if (status === 401 || status === 403 || lower.includes('User ID is required') || lower.includes('user not found') || lower.includes('login') || lower.includes('unauthorized')) {
+        // brief delay to show message then navigate
+        setTimeout(() => {
+          navigate('/login');
+        }, 700);
+      }
       // clear error message after 5 seconds
       setTimeout(() => setCartMessage(''), 5000);
     } finally {

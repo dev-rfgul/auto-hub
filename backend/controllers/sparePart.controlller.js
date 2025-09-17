@@ -41,11 +41,11 @@ export const addToCart = async (req, res) => {
     }
     
     if (!userId) {
-      return res.status(400).json({ message: 'User ID is required' });
+      return res.status(401).json({ message: 'User ID is required' });
     }
     
     if (!productId) {
-      return res.status(400).json({ message: 'Product ID is required' });
+      return res.status(403).json({ message: 'Product ID is required' });
     }
 
     // fetch product details
