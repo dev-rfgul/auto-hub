@@ -15,6 +15,8 @@ import UserDashboard from "./Pages/UserDashboard";
 import Compare from "./Pages/Compare";
 import Orders from "./Pages/Orders";
 import Chatbot from "./signup/Chatbot";
+import BlogsList from "./Pages/BlogsList";
+import BlogDetail from "./Pages/BlogDetail";
 
 const App = () => {
   const [role, setRole] = useState(null);
@@ -96,6 +98,8 @@ const App = () => {
         <Route path="/product/:id" element={<ProductPreview />} />
         <Route path="/compare" element={<Compare />} />
         <Route path="/orders" element={<Orders />} />
+  <Route path="/blogs" element={<BlogsList />} />
+  <Route path="/blogs/:idOrSlug" element={<BlogDetail />} />
       </Routes>
       <Chatbot />
     </div>

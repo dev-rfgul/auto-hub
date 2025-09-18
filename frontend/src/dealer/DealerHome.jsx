@@ -1,15 +1,18 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+// import React, { useEffect, useState } from "react";
 // import axios from "axios";
 // import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Cookie from "js-cookie";
+import BlogForm from "../components/BlogForm";
+import { useState, useEffect } from "react";
 
 const DealerHome = () => {
   const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [dealer, setDealer] = useState(null);
+  const [showBlogForm, setShowBlogForm] = useState(false);
 
   // Helper to render address which may be a string or an object
   const formatAddress = (address) => {
@@ -153,7 +156,9 @@ const DealerHome = () => {
             <Link to="/store-signup" className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
               Register Store
             </Link>
+            <button onClick={() => setShowBlogForm(true)} className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Create Blog</button>
           </div>
+  {showBlogForm && <BlogForm onClose={() => setShowBlogForm(false)} onCreated={(b) => console.log('Blog created', b)} />}
         </header>
 
         <section>
@@ -229,6 +234,7 @@ const DealerHome = () => {
             </>
           )}
         </section>
+  {showBlogForm && <BlogForm onClose={() => setShowBlogForm(false)} onCreated={(b) => console.log('dealer created blog', b)} />}
       </div>
     </div>
   );

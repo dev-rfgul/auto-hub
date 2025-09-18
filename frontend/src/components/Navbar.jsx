@@ -83,6 +83,7 @@ const Navbar = () => {
             ) : (
               <Link to={dashboardPath} className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Account</Link>
             )}
+              <Link to="/blogs" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Blogs</Link>
             {location.pathname !== "/" && (
               <Link to="/" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Home</Link>
             )}
@@ -127,6 +128,7 @@ const Navbar = () => {
             ) : (
               <Link to={dashboardPath} onClick={() => setOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">Account</Link>
             )}
+            <Link to="/blogs" onClick={() => setOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">Blogs</Link>
             {location.pathname !== "/" && (
               <Link to="/" onClick={() => setOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">Home</Link>
             )}
