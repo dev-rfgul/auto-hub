@@ -44,10 +44,96 @@ const EnhancedChatbot = () => {
       const url = `${base.replace(/\/$/, '')}/api/chatbot/ai-response`;
       console.log('Chatbot calling URL:', url, 'prompt:', text);
 
-      const res = await axios.post(url, { prompt: text });
+      // build a contextual prompt including the last 6 user/bot exchanges
+      const buildContextualPrompt = (question) => {
+        try {
+          // gather exchanges as pairs
+          const pairs = [];
+          let tempUser = null;
+          for (let i = 0; i < messages.length; i++) {
+            const m = messages[i];
+            if (m.role === 'user') tempUser = m.text;
+            else if (m.role === 'bot' && tempUser !== null) {
+              pairs.push({ user: tempUser, bot: m.text });
+              tempUser = null;
+            }
+          }
+          // if the last message was a user without a bot reply yet, include it
+          if (tempUser !== null) pairs.push({ user: tempUser, bot: '' });
+
+          const recent = pairs.slice(-6); // last 6 exchanges
+          const maxLen = 1000;
+          const esc = (s = '') => String(s).replace(/\s+/g, ' ').trim().slice(0, maxLen);
+          let ctx = '';
+          if (recent.length) {
+            ctx += 'Conversation context (most recent last):\n';
+            recent.forEach((p, idx) => {
+              ctx += `User: ${esc(p.user)}\nAssistant: ${esc(p.bot)}\n`;
+            });
+            ctx += '\n';
+          }
+          ctx += `Current question: ${esc(question)}\n`;
+          ctx += 'Please respond as an expert car diagnostic assistant for laypeople. Keep explanations clear and list actionable next steps when appropriate.';
+          return ctx;
+        } catch (e) {
+          return question;
+        }
+      };
+
+      const combinedPrompt = buildContextualPrompt(text);
+      const res = await axios.post(url, { prompt: combinedPrompt });
+	  console.log(res.data)
       const botText = res?.data?.response || res?.data || 'Sorry, no reply from server.';
 
-      setMessages(prev => [...prev, { role: 'bot', text: botText }]);
+      // parse JSON and produce a cleaned text for chat display
+      const parseAndClean = (s = '') => {
+        try {
+          let text = String(s || '');
+          let parsed = null;
+
+          // 1) look for ```json ... ``` blocks
+          const codeBlockMatch = text.match(/```json\s*([\s\S]*?)```/i);
+          if (codeBlockMatch) {
+            const jsonText = codeBlockMatch[1].trim();
+            try { parsed = JSON.parse(jsonText); } catch (e) { parsed = null; }
+            // remove the entire code block from the text
+            text = text.replace(codeBlockMatch[0], '');
+          } else {
+            // 2) otherwise try trailing JSON object at end
+            const trailingMatch = text.match(/(\{[\s\S]*\})\s*$/);
+            if (trailingMatch) {
+              try { parsed = JSON.parse(trailingMatch[1]); } catch (e) { parsed = null; }
+              text = text.slice(0, trailingMatch.index);
+            }
+          }
+
+          // 3) strip stray separators or single-character junk lines (like /|, $$$, "" )
+          const lines = text.split(/\r?\n/).map(l => l.replace(/^[>\-\s]+|[\-\s]+$/g, ''));
+          const filtered = lines.filter(l => {
+            const t = l.trim();
+            if (!t) return false;
+            // remove lines that are only punctuation or repeating chars
+            if (/^[\/|$"'`~\-]{1,}$/.test(t)) return false;
+            return true;
+          });
+          let cleaned = filtered.join('\n').trim();
+
+          // remove wrapping quotes if the assistant returned a quoted string
+          if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
+            cleaned = cleaned.slice(1, -1).trim();
+          }
+
+          // fallback: if cleaned is empty, return original trimmed text without code fences
+          if (!cleaned) cleaned = String(s).replace(/```[\s\S]*?```/g, '').trim();
+
+          return { text: cleaned, data: parsed };
+        } catch (e) {
+          return { text: s, data: null };
+        }
+      };
+
+      const { text: cleanedText, data: parsed } = parseAndClean(botText);
+      setMessages(prev => [...prev, { role: 'bot', text: cleanedText, data: parsed }]);
     } catch (err) {
       console.error('Chatbot request failed', err);
       const serverMessage = err?.response?.data?.error || err?.response?.data || err.message;
@@ -275,7 +361,15 @@ const EnhancedChatbot = () => {
                       : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-br-md'
                   }`}>
                     {m.role === 'bot' ? (
-                      <div className="text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: renderMessageAsHTML(m.text) }} />
+                      <div>
+                        <div className="text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: renderMessageAsHTML(m.text) }} />
+                        {m.data && (
+                          <details className="mt-3 bg-gray-50 p-3 rounded text-xs text-gray-700">
+                            <summary className="cursor-pointer font-medium">Structured response (JSON)</summary>
+                            <pre className="mt-2 overflow-auto text-xs">{JSON.stringify(m.data, null, 2)}</pre>
+                          </details>
+                        )}
+                      </div>
                     ) : (
                       <div className="text-sm leading-relaxed">{m.text}</div>
                     )}
