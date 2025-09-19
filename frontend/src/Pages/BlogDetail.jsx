@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import axios from 'axios';
 
 // Polished Blog Detail page following DESIGN_INSTRUCTIONS.md
 // - hero with title/metadata
@@ -69,31 +70,25 @@ const BlogDetail = () => {
     const fetchBlog = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`${base}/api/blogs/${encodeURIComponent(idOrSlug)}`);
-        if (!res.ok) throw new Error('Blog not found');
-        const data = await res.json();
+        const res = await axios.get(`${base}/api/blogs/${encodeURIComponent(idOrSlug)}`);
+        const data = res.data;
+        console.log('Fetched blog data:', data);
         setBlog(data);
         const imgs = data.images || (data.image ? [data.image] : []);
         if (imgs.length) setMainImage(imgs[0]);
 
-        // try fetch author name if author id is present
         if (data.author) {
           try {
-            // backend routes register userRoutes at /api/user and the route for fetching a user is '/user/:id'
-            // so the full path is /api/user/user/:id — try that first, then fallback to /api/user/:id
-            const tryFetchUser = async (id) => {
-              const candidates = [`${base}/api/user/user/${id}`, `${base}/api/user/${id}`];
-              for (const url of candidates) {
-                try {
-                  const r = await fetch(url);
-                  if (r.ok) return await r.json();
-                } catch (e) {
-                  // continue
-                }
+            const candidates = [`${base}/api/user/user/${data.author}`, `${base}/api/user/${data.author}`];
+            let u = null;
+            for (const url of candidates) {
+              try {
+                const r = await axios.get(url);
+                if (r.status === 200) { u = r.data; break; }
+              } catch (e) {
+                // continue
               }
-              return null;
-            };
-            const u = await tryFetchUser(data.author);
+            }
             if (u) setAuthor(u);
           } catch (e) {
             // ignore
