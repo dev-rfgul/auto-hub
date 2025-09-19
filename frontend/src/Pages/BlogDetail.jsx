@@ -188,10 +188,7 @@ const BlogDetail = () => {
           <div className="flex gap-2 items-center">
             {(blog.tags || []).map((t) => (<span key={t} className="text-xs bg-gray-100 px-2 py-1 rounded">#{t}</span>))}
           </div>
-          <div className="flex gap-3">
-            <button className="px-4 py-2 bg-blue-600 text-white rounded">Contact Dealer</button>
-            <button className="px-4 py-2 border rounded">Share</button>
-          </div>
+
         </div>
       </main>
 
