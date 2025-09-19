@@ -41,8 +41,9 @@ const LoginUser = () => {
     try {
       const res = await axios.post(endpoint, { email: form.email, password: form.password }, { withCredentials: true });
       setSuccess(res.data?.message || 'Login successful');
-      // redirect after a short delay
-      setTimeout(() => navigate('/'), 600);
+  // notify other components that auth changed and redirect after a short delay
+  window.dispatchEvent(new Event('authChanged'));
+  setTimeout(() => navigate('/'), 600);
     } catch (err) {
       setError(err?.response?.data?.message || err.message || 'Login failed');
     } finally {

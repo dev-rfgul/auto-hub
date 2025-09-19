@@ -7,9 +7,16 @@ const Navbar = () => {
   const [user, setUser] = useState(null);
   const base = import.meta.env.VITE_BACKEND_URL || '';
 
-  // try parse cookie first (local dev / same-origin). If not present, call backend /me endpoint (production when cookie is set on API domain)
-  useEffect(() => {
-    const load = async () => {
+  // fetch user from backend /api/user/me (same logic as App.jsx)
+  const loadUser = async () => {
+    try {
+      const res = await fetch(`${base}/api/user/me`, { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data);
+        return;
+      }
+      // fallback: try cookie (works for local setups where cookie is client-visible)
       const userCookie = Cookie.get('user');
       let parsed = null;
       try {
@@ -17,30 +24,41 @@ const Navbar = () => {
       } catch (e) {
         parsed = null;
       }
-      if (parsed) {
-        setUser(parsed);
-        return;
-      }
-
-      // fallback to calling API /me to detect logged-in user (requires backend /api/user/me)
+      setUser(parsed);
+    } catch (err) {
+      console.warn('Could not load /me in Navbar:', err);
+      const userCookie = Cookie.get('user');
+      let parsed = null;
       try {
-        const res = await fetch(`${base}/api/user/me`, { credentials: 'include' });
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data);
-          return;
-        }
-      } catch (err) {
-        // ignore
+        parsed = userCookie ? JSON.parse(userCookie) : null;
+      } catch (e) {
+        parsed = null;
       }
-      setUser(null);
-    };
-    load();
-  }, []);
+      setUser(parsed);
+    }
+  };
 
-  console.log("User Cookie in Navbar:", user);
+  useEffect(() => {
+    loadUser();
+    const onAuth = () => loadUser();
+    window.addEventListener('authChanged', onAuth);
+    return () => window.removeEventListener('authChanged', onAuth);
+  }, [base]);
   const role = user?.role || null;
   const dashboardPath = role === 'dealer' ? '/dealer-dashboard' : role === 'admin' ? '/admin-panel' : '/user-dashboard';
+  const logout = async () => {
+    try {
+      await fetch(`${base}/api/user/logout`, { method: 'POST', credentials: 'include' });
+    } catch (err) {
+      console.warn('Logout request failed', err);
+    }
+    // remove client cookie fallback and reset user
+    Cookie.remove('user');
+  setUser(null);
+  // notify other parts of app and redirect to home
+  window.dispatchEvent(new Event('authChanged'));
+  window.location.href = '/';
+  };
   // close mobile menu on navigation change
   useEffect(() => {
     setOpen(false);
@@ -81,7 +99,10 @@ const Navbar = () => {
                 )}
               </>
             ) : (
-              <Link to={dashboardPath} className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Account</Link>
+              <>
+                <Link to={dashboardPath} className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Account</Link>
+                <button onClick={logout} className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Logout</button>
+              </>
             )}
               <Link to="/blogs" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Blogs</Link>
             {location.pathname !== "/" && (

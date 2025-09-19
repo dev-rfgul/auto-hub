@@ -271,7 +271,7 @@ const Home = () => {
         <section className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-900">Featured Products</h2>
-            <button className="text-blue-600 hover:text-blue-700 font-medium">View All →</button>
+            {/* <button className="text-blue-600 hover:text-blue-700 font-medium">View All →</button> */}
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">

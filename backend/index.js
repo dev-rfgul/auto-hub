@@ -50,3 +50,6 @@ app.use('/api/chatbot', chatbotRoutes);
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+// Export app for Vercel serverless functions
+export default app;

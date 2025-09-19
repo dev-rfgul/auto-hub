@@ -125,3 +125,19 @@ export const getMe = async (req, res) => {
     return res.status(500).json({ message: 'Error fetching current user', error: err.message || err });
   }
 };
+
+export const logoutUser = async (req, res) => {
+  try {
+    // Clear the cookie by setting it to empty and expiring immediately.
+    const cookieOptions = {
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: 0,
+    };
+    res.cookie('user', '', cookieOptions);
+    return res.status(200).json({ message: 'Logged out' });
+  } catch (err) {
+    console.error('logoutUser error', err);
+    return res.status(500).json({ message: 'Logout failed', error: err.message || err });
+  }
+};
