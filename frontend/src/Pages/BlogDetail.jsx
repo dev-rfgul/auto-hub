@@ -79,11 +79,22 @@ const BlogDetail = () => {
         // try fetch author name if author id is present
         if (data.author) {
           try {
-            const uRes = await fetch(`${base}/api/user/${data.author}`);
-            if (uRes.ok) {
-              const u = await uRes.json();
-              setAuthor(u);
-            }
+            // backend routes register userRoutes at /api/user and the route for fetching a user is '/user/:id'
+            // so the full path is /api/user/user/:id — try that first, then fallback to /api/user/:id
+            const tryFetchUser = async (id) => {
+              const candidates = [`${base}/api/user/user/${id}`, `${base}/api/user/${id}`];
+              for (const url of candidates) {
+                try {
+                  const r = await fetch(url);
+                  if (r.ok) return await r.json();
+                } catch (e) {
+                  // continue
+                }
+              }
+              return null;
+            };
+            const u = await tryFetchUser(data.author);
+            if (u) setAuthor(u);
           } catch (e) {
             // ignore
           }
