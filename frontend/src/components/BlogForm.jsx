@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 const BlogForm = ({ onClose, onCreated }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -14,35 +15,103 @@ const BlogForm = ({ onClose, onCreated }) => {
     setImages(Array.from(e.target.files || []));
   };
 
+  const navigate = useNavigate();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     try {
+      const toHTML = (raw = '') => {
+        const s = String(raw || '').trim();
+        if (!s) return '';
+        // If it already contains HTML tags, assume user provided HTML
+        if (/<[a-z][\s\S]*>/i.test(s)) return s;
+
+        const lines = s.split(/\r?\n/);
+        const blocks = [];
+        let i = 0;
+        while (i < lines.length) {
+          const line = lines[i].trim();
+          if (line === '') { i++; continue; }
+
+          if (/^[-\*]\s+/.test(line)) {
+            const items = [];
+            while (i < lines.length && /^[-\*]\s+/.test(lines[i].trim())) {
+              items.push(lines[i].trim().replace(/^[-\*]\s+/, ''));
+              i++;
+            }
+            blocks.push('<ul>' + items.map(it => `<li>${formatInline(it)}</li>`).join('') + '</ul>');
+            continue;
+          }
+
+          if (/^\d+\.\s+/.test(line)) {
+            const items = [];
+            while (i < lines.length && /^\d+\.\s+/.test(lines[i].trim())) {
+              items.push(lines[i].trim().replace(/^\d+\.\s+/, ''));
+              i++;
+            }
+            blocks.push('<ol>' + items.map(it => `<li>${formatInline(it)}</li>`).join('') + '</ol>');
+            continue;
+          }
+
+          const para = [line];
+          i++;
+          while (i < lines.length && lines[i].trim() !== '' && !/^[-\*]\s+/.test(lines[i].trim()) && !/^\d+\.\s+/.test(lines[i].trim())) {
+            para.push(lines[i].trim());
+            i++;
+          }
+          blocks.push('<p>' + formatInline(para.join(' ')) + '</p>');
+        }
+
+        function formatInline(str) {
+          const esc = (s) => String(s)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+          let out = esc(str);
+          out = out.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+          out = out.replace(/\*(.*?)\*/g, '<em>$1</em>');
+          return out;
+        }
+
+        return blocks.join('\n');
+      };
+
       const form = new FormData();
       form.append('title', title);
-      form.append('content', content);
+      form.append('content', toHTML(content));
       form.append('published', published ? 'true' : 'false');
   tags.split(',').map(t => t.trim()).filter(Boolean).forEach(t => form.append('tags[]', t));
   images.forEach((f) => form.append('images', f));
 
-      const res = await fetch(`${base}/api/blogs`, {
-        method: 'POST',
-        body: form,
-        credentials: 'include',
+  // send cookies (session) to backend; backend expects cookie-based auth
+  const res = await axios.post(`${base}/api/blogs/add-blog`, form, {
+        withCredentials: true,
       });
 
-      if (!res.ok) {
-        let errMsg = 'Create blog failed';
-        try { errMsg = await res.text(); } catch {}
-        throw new Error(errMsg);
-      }
-      const data = await res.json();
+      const data = res.data;
       if (onCreated) onCreated(data);
       onClose();
     } catch (err) {
       console.error('Create blog error', err);
-      setError(err.message || 'Could not create blog');
+      // axios error handling
+      if (err?.response) {
+        const status = err.response.status;
+        const body = err.response.data;
+        const msg = body?.message || body?.error || JSON.stringify(body) || err.message;
+        // redirect to login on auth errors
+        if (status === 401 || status === 403) {
+          setError('You must be logged in to create a blog. Redirecting to login...');
+          setTimeout(() => navigate('/login'), 600);
+          return;
+        }
+        setError(msg || 'Could not create blog');
+      } else {
+        setError(err.message || 'Could not create blog');
+      }
     } finally {
       setLoading(false);
     }
@@ -63,8 +132,9 @@ const BlogForm = ({ onClose, onCreated }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Content (HTML allowed)</label>
+            <label className="block text-sm font-medium text-gray-700">Content (paste plain text — it will be converted to HTML)</label>
             <textarea value={content} onChange={(e) => setContent(e.target.value)} rows={10} required className="mt-1 block w-full border rounded px-3 py-2" />
+            <p className="text-xs text-gray-500 mt-1">You can paste plain text or simple markdown-like lists; the form will convert it into HTML for you.</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
