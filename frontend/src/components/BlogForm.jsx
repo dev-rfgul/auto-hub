@@ -132,7 +132,7 @@ const BlogForm = ({ onClose, onCreated }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Content (paste plain text — it will be converted to HTML)</label>
+            <label className="block text-sm font-medium text-gray-700">Content </label>
             <textarea value={content} onChange={(e) => setContent(e.target.value)} rows={10} required className="mt-1 block w-full border rounded px-3 py-2" />
             <p className="text-xs text-gray-500 mt-1">You can paste plain text or simple markdown-like lists; the form will convert it into HTML for you.</p>
           </div>

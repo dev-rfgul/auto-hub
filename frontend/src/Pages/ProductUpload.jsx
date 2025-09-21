@@ -305,7 +305,6 @@ const ProductUpload = () => {
         </div>
 
         <div className="flex items-center justify-between pt-4">
-          <div className="text-sm text-gray-500">Endpoint: <code className="bg-gray-100 px-1 rounded">{endpoint}</code></div>
           <button type="submit" disabled={loading} className="px-4 py-2 bg-green-600 text-white rounded">
             {loading ? 'Uploading...' : 'Upload Product'}
           </button>
