@@ -612,23 +612,6 @@ const BlogDetail = () => {
                 </Link>
               </div>
             )}
-
-            {/* Newsletter Signup */}
-            <div className="bg-gradient-to-br from-blue-600 to-purple-700 rounded-3xl shadow-xl p-8 text-white">
-              <h3 className="text-xl font-bold mb-4">Stay Updated</h3>
-              <p className="text-blue-100 text-sm mb-6">
-                Get the latest automotive insights and trends delivered to your inbox.
-              </p>
-              <div className="space-y-3">
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="w-full px-4 py-3 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/50"
-                />
-                <button className="w-full bg-white text-blue-600 font-semibold py-3 rounded-xl hover:bg-gray-100 transition-colors duration-300">
-                  Subscribe
-                </button>
-              </div>
             </div>
           </aside>
         </div>
