@@ -15,6 +15,8 @@ import UserDashboard from "./Pages/UserDashboard";
 import Compare from "./Pages/Compare";
 import Orders from "./Pages/Orders";
 import Chatbot from "./signup/Chatbot";
+import BlogsList from "./Pages/BlogsList";
+import BlogDetail from "./Pages/BlogDetail";
 
 const App = () => {
   const [role, setRole] = useState(null);
@@ -31,7 +33,7 @@ const App = () => {
         const res = await fetch(`${base}/api/user/me`, { credentials: 'include' });
         if (res.ok) {
           const user = await res.json();
-          console.log('User from /me:', user);
+          // console.log('User from /me:', user);
           setRole(user?.role ?? null);
           if (user && user.role && !hasRedirected) {
             setHasRedirected(true);
@@ -51,7 +53,7 @@ const App = () => {
           setRole(user?.role ?? null);
         }
       } catch (err) {
-        console.warn('Could not load /me:', err);
+        // console.warn('Could not load /me:', err);
         const userCookie = Cookie.get('user');
         let user = null;
         try {
@@ -96,6 +98,8 @@ const App = () => {
         <Route path="/product/:id" element={<ProductPreview />} />
         <Route path="/compare" element={<Compare />} />
         <Route path="/orders" element={<Orders />} />
+  <Route path="/blogs" element={<BlogsList />} />
+  <Route path="/blogs/:idOrSlug" element={<BlogDetail />} />
       </Routes>
       <Chatbot />
     </div>

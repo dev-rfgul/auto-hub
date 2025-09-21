@@ -1,11 +1,14 @@
-import React, { useState } from "react";
+// import React, { useState } from "react";
 import Dealers from "./Dealers";
 import Stores from "./Stores";
+import { useState } from "react";
+import BlogForm from "../../components/BlogForm";
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dealers");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showForm, setShowForm] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 sm:p-10">
@@ -18,6 +21,9 @@ const AdminDashboard = () => {
         </header>
 
         <div className="bg-white p-4 rounded-md shadow-sm">
+          <div className="flex justify-end mb-3">
+            <button onClick={() => setShowForm(true)} className="px-4 py-2 bg-green-600 text-white rounded">Create Blog</button>
+          </div>
           <nav className="mb-4">
             <button
               onClick={() => setActiveTab("dealers")}
@@ -64,6 +70,7 @@ const AdminDashboard = () => {
               )}
             </>
           )}
+          {showForm && <BlogForm onClose={() => setShowForm(false)} onCreated={(b) => console.log('Blog created', b)} />}
         </div>
       </div>
     </div>
