@@ -19,17 +19,25 @@ const CategoryPill = ({ name, icon: Icon, isActive, onClick }) => (
 );
 
 const ProductCard = ({ product }) => {
-  const discountPercentage = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
+  // Safe property access with fallbacks
+  const originalPrice = product?.originalPrice || 0;
+  const price = product?.price || 0;
+  const discountPercentage = originalPrice > price ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
+  const images = product?.images || [];
+  const imageUrl = images.length > 0 ? images[0] : '/placeholder-image.jpg';
 
   return (
     <div className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-100 group">
-      <Link to={`/product/${product._id}`}>
+      <Link to={`/product/${product?._id || '#'}`}>
       {/* product images section */}
       <div className="relative overflow-hidden">
           <img
-            src={product.images[0]}
-            alt={product.name}
+            src={imageUrl}
+            alt={product?.name || 'Product'}
             className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+            onError={(e) => {
+              e.target.src = '/placeholder-image.jpg';
+            }}
           />
         {discountPercentage > 0 && (
           <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-md text-xs font-semibold">
@@ -48,9 +56,9 @@ const ProductCard = ({ product }) => {
 
       {/* product details section */}
       <div className="p-4">
-        <div className="text-xs text-blue-600 font-medium mb-1">{product.brand}</div>
-        <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2">{product.name}</h3>
-        <div className="text-xs text-gray-500 mb-2">Part #: {product.partNumber}</div>
+        <div className="text-xs text-blue-600 font-medium mb-1">{product?.brand || 'Unknown Brand'}</div>
+        <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2">{product?.name || 'Product Name'}</h3>
+        <div className="text-xs text-gray-500 mb-2">Part #: {product?.partNumber || 'N/A'}</div>
         
         <div className="flex items-center gap-1 mb-2">
           <div className="flex items-center gap-1">
@@ -58,29 +66,29 @@ const ProductCard = ({ product }) => {
               <Star 
                 key={i} 
                 size={12} 
-                className={i < Math.floor(product.rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}
+                className={i < Math.floor(product?.rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}
               />
             ))}
           </div>
-          <span className="text-xs text-gray-600">({product.reviewCount})</span>
+          <span className="text-xs text-gray-600">({product?.reviewCount || 0})</span>
         </div>
 
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <span className="text-lg font-bold text-green-600">${product.price}</span>
-            {product.originalPrice > product.price && (
-              <span className="text-sm text-gray-500 line-through">${product.originalPrice}</span>
+            <span className="text-lg font-bold text-green-600">${price}</span>
+            {originalPrice > price && (
+              <span className="text-sm text-gray-500 line-through">${originalPrice}</span>
             )}
           </div>
           <div className={`text-xs px-2 py-1 rounded-full ${
-            product.stockQuantity > 50 
+            (product?.stockQuantity || 0) > 50 
               ? 'bg-green-100 text-green-700' 
-              : product.stockQuantity > 10 
+              : (product?.stockQuantity || 0) > 10 
                 ? 'bg-yellow-100 text-yellow-700'
                 : 'bg-red-100 text-red-700'
           }`}>
-            {product.stockQuantity > 50 ? 'In Stock' : 
-             product.stockQuantity > 10 ? 'Low Stock' : 'Limited'}
+            {(product?.stockQuantity || 0) > 50 ? 'In Stock' : 
+            (product?.stockQuantity || 0) > 10 ? 'Low Stock' : 'Limited'}
           </div>
         </div>
 
@@ -127,17 +135,20 @@ const Home = () => {
     useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
+      setError(null); // Clear any previous errors
       try {
         const base = import.meta.env.VITE_BACKEND_URL || '';
-  const url = `${base}/api/spareparts/getAllSpareParts`;
-  console.log('Home fetch base:', base, ' url:', url);
-  const res = await axios.get(url);
-  const list = res.data || [];
-  console.log('Fetched products:', list);
-  setProducts(list);
+        const url = `${base}/api/spareparts/getAllSpareParts`;
+        console.log('Home fetch base:', base, ' url:', url);
+        const res = await axios.get(url);
+        const list = res.data || [];
+        console.log('Fetched products:', list);
+        // Ensure we always set an array
+        setProducts(Array.isArray(list) ? list : []);
       } catch (err) {
-  console.error('Error fetching products:', err);
-  setError('Failed to load products');
+        console.error('Error fetching products:', err);
+        setError('Failed to load products. Please try again later.');
+        setProducts([]); // Ensure products is always an array
       } finally {
         setLoading(false);
       }
@@ -145,55 +156,65 @@ const Home = () => {
     fetchProducts();
   }, []);
 
-  const brands = useMemo(() => {
-    const uniqueBrands = [...new Set(products.map(p => p.brand))];
+const brands = useMemo(() => {
+  // Check if products is an array before proceeding
+  if (Array.isArray(products)) {
+    const uniqueBrands = [...new Set(products.map(p => p?.brand).filter(Boolean))];
     return uniqueBrands.sort();
-  }, [products]);
+  }
+  return []; // Return an empty array if products is not an array
+}, [products]);
+
 
   const applyFilters = useMemo(() => {
+    // Ensure we start with an array
+    if (!Array.isArray(products)) {
+      return [];
+    }
+    
     let filtered = products;
 
     // Search query filter
     if (query) {
       filtered = filtered.filter(product =>
-        product.name.toLowerCase().includes(query.toLowerCase()) ||
-        product.brand.toLowerCase().includes(query.toLowerCase()) ||
-        product.partNumber.toLowerCase().includes(query.toLowerCase()) ||
-        product.category.toLowerCase().includes(query.toLowerCase())
+        (product?.name || '').toLowerCase().includes(query.toLowerCase()) ||
+        (product?.brand || '').toLowerCase().includes(query.toLowerCase()) ||
+        (product?.partNumber || '').toLowerCase().includes(query.toLowerCase()) ||
+        (product?.category || '').toLowerCase().includes(query.toLowerCase())
       );
     }
 
     // Category filter
     if (selectedCategory !== 'All') {
-      filtered = filtered.filter(product => product.category === selectedCategory);
+      filtered = filtered.filter(product => product?.category === selectedCategory);
     }
 
     // Brand filter
     if (selectedBrand) {
-      filtered = filtered.filter(product => product.brand === selectedBrand);
+      filtered = filtered.filter(product => product?.brand === selectedBrand);
     }
 
     // Price range filter
     if (priceRange.min) {
-      filtered = filtered.filter(product => product.price >= parseFloat(priceRange.min));
+      filtered = filtered.filter(product => (product?.price || 0) >= parseFloat(priceRange.min));
     }
     if (priceRange.max) {
-      filtered = filtered.filter(product => product.price <= parseFloat(priceRange.max));
+      filtered = filtered.filter(product => (product?.price || 0) <= parseFloat(priceRange.max));
     }
 
     // Sorting
     switch (sortBy) {
       case 'price_low':
-        filtered.sort((a, b) => a.price - b.price);
+        filtered.sort((a, b) => (a?.price || 0) - (b?.price || 0));
         break;
       case 'price_high':
-        filtered.sort((a, b) => b.price - a.price);
+        filtered.sort((a, b) => (b?.price || 0) - (a?.price || 0));
         break;
       case 'rating':
-        filtered.sort((a, b) => b.rating - a.rating);
+        filtered.sort((a, b) => (b?.rating || 0) - (a?.rating || 0));
         break;
       case 'newest':
-        filtered.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+        filtered.sort((a, b) => new Date(b?.createdAt || 0) - new Date(a?.createdAt || 0));
         break;
       default:
         // Keep original order for relevance
@@ -207,7 +228,7 @@ const Home = () => {
     setFilteredProducts(applyFilters);
   }, [applyFilters]);
 
-  const featuredProducts = products.slice(0, 6);
+  const featuredProducts = Array.isArray(products) ? products.slice(0, 6) : [];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -276,16 +297,19 @@ const Home = () => {
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
             {featuredProducts.map((product) => (
-              <Link to={`/product/${product._id}`} key={product._id}>
-              <div key={product._id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-4 border border-gray-100">
+              <Link to={`/product/${product?._id || '#'}`} key={product?._id || Math.random()}>
+              <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-4 border border-gray-100">
                 <img 
-                  src={product.images[0]} 
-                  alt={product.name}
+                  src={product?.images?.[0] || '/placeholder-image.jpg'} 
+                  alt={product?.name || 'Product'}
                   className="w-full h-24 object-cover rounded-md mb-3"
+                  onError={(e) => {
+                    e.target.src = '/placeholder-image.jpg';
+                  }}
                 />
-                <h3 className="font-medium text-sm text-gray-900 mb-1 line-clamp-2">{product.name}</h3>
-                <div className="text-xs text-gray-500 mb-2">{product.brand}</div>
-                <div className="text-lg font-bold text-green-600">${product.price}</div>
+                <h3 className="font-medium text-sm text-gray-900 mb-1 line-clamp-2">{product?.name || 'Product Name'}</h3>
+                <div className="text-xs text-gray-500 mb-2">{product?.brand || 'Unknown Brand'}</div>
+                <div className="text-lg font-bold text-green-600">${product?.price || 0}</div>
               </div>
               </Link>
             ))}
@@ -390,7 +414,24 @@ const Home = () => {
             </div>
 
             {/* Products Grid */}
-            {loading ? (
+            {error ? (
+              <div className="text-center py-12">
+                <div className="text-red-400 mb-4">
+                  <Search size={64} className="mx-auto" />
+                </div>
+                <h3 className="text-lg font-semibold text-red-600 mb-2">Error Loading Products</h3>
+                <p className="text-gray-600 mb-4">{error}</p>
+                <button
+                  onClick={() => {
+                    setError(null);
+                    window.location.reload();
+                  }}
+                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[...Array(9)].map((_, i) => (
                   <div key={i} className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
