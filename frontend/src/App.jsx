@@ -9,6 +9,7 @@ import ProductUpload from "./Pages/ProductUpload";
 import LoginUser from "./signup/LoginUser";
 import DealerHome from "./dealer/DealerHome";
 import StoreHome from "./Pages/store/StorePage";
+import StoreDetail from "./dealer/StoreDetail";
 import ProductPreview from "./Pages/ProductPreview";
 import Home from "./Pages/Home";
 import UserDashboard from "./Pages/UserDashboard";
@@ -88,8 +89,10 @@ const App = () => {
           <>
             <Route path="/store-signup" element={<StoreSignup />} />
             <Route path="/dealer-dashboard" element={<DealerHome />} />
-            <Route path="/dealer/store/:id" element={<StoreHome />} />
+            <Route path="/dealer" element={<DealerHome />} />
+            <Route path="/dealer/store/:storeId" element={<StoreDetail />} />
             <Route path="/product-upload/:id" element={<ProductUpload />} />
+            <Route path="/product-upload/:id/:productId" element={<ProductUpload />} />
           </>
         )}
         <Route path="/user-signup" element={<Signup />} />
