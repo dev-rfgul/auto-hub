@@ -1,14 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 
 const ProductUpload = () => {
   const base = import.meta.env.VITE_BACKEND_URL || '';
-  const endpoint = `${base}/api/product/add-spare-part`;
-
-  // store id from path (e.g. /product-upload/:id) or query ?storeId=
-  const { id: storeId } = useParams();
-  console.log('storeIdFromPath:', storeId );
+  const navigate = useNavigate();
+  
+  // Check if we're in edit mode
+  const { id: storeId, productId } = useParams(); // /product-upload/:id/:productId for edit
+  const location = useLocation();
+  const isEditMode = Boolean(productId);
+  
+  console.log('storeIdFromPath:', storeId, 'productId:', productId, 'isEditMode:', isEditMode);
 
   const [form, setForm] = useState({
     name: '',
@@ -31,9 +34,58 @@ const ProductUpload = () => {
   });
   const [images, setImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
+  const [existingImages, setExistingImages] = useState([]); // For edit mode
   const [loading, setLoading] = useState(false);
+  const [loadingProduct, setLoadingProduct] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+
+  // Load product data if in edit mode
+  useEffect(() => {
+    if (isEditMode && productId) {
+      fetchProductData();
+    }
+  }, [isEditMode, productId]);
+
+  const fetchProductData = async () => {
+    setLoadingProduct(true);
+    try {
+      const res = await axios.get(`${base}/api/product/spare-part/${productId}`, {
+        withCredentials: true
+      });
+      const product = res.data;
+      
+      setForm({
+        name: product.name || '',
+        partNumber: product.partNumber || '',
+        brand: product.brand || '',
+        category: product.category || '',
+        subcategory: product.subcategory || '',
+        description: product.description || '',
+        specifications: {
+          dimensions: product.specifications?.dimensions || '',
+          weight: product.specifications?.weight || '',
+          material: product.specifications?.material || '',
+          compatibility: product.specifications?.compatibility || [''],
+          warranty: product.specifications?.warranty || '',
+        },
+        price: product.price || '',
+        originalPrice: product.originalPrice || '',
+        stockQuantity: product.stockQuantity || '',
+        storeId: product.storeId?._id || storeId,
+      });
+      
+      // Set existing images
+      if (product.images && product.images.length > 0) {
+        setExistingImages(product.images);
+      }
+    } catch (err) {
+      console.error('Error fetching product:', err);
+      setError('Failed to load product data');
+    } finally {
+      setLoadingProduct(false);
+    }
+  };
   const onChange = (e) => {
     const { name, value } = e.target;
     if (name.startsWith('spec_')) {
@@ -113,8 +165,10 @@ const ProductUpload = () => {
     setSuccess(null);
     if (!validate()) return;
     setLoading(true);
+    
     try {
       const data = new FormData();
+      
       // primitive fields
       data.append('name', form.name);
       data.append('partNumber', form.partNumber);
@@ -129,84 +183,122 @@ const ProductUpload = () => {
       // specifications: send as JSON string
       data.append('specifications', JSON.stringify(form.specifications || {}));
 
-      // images
-      images.forEach((file, idx) => {
-        data.append('images', file);
-      });
-  // include storeId from path (line 10) or fallback to form.storeId
-  data.append('storeId', storeId || form.storeId || '');
-      // developer-friendly FormData inspection
-      console.log('FormData entries:', [...data.entries()].map(([k, v]) => [k, v instanceof File ? v.name : v]));
-      console.log('FormData images (file names):', data.getAll('images').map((f) => f.name));
-
-      // Build a parsed object where repeated keys become arrays (images, etc.)
-      const parsed = {};
-      for (const [k, v] of data.entries()) {
-        if (k === 'images') {
-          parsed.images = parsed.images || [];
-          parsed.images.push(v); // keep File objects; use v.name for filenames
-          continue;
-        }
-        if (k === 'specifications') {
-          try {
-            parsed.specifications = JSON.parse(v);
-          } catch (e) {
-            parsed.specifications = v;
-          }
-          continue;
-        }
-        if (parsed[k] !== undefined) {
-          // already exists -> ensure array
-          if (!Array.isArray(parsed[k])) parsed[k] = [parsed[k]];
-          parsed[k].push(v);
-        } else {
-          parsed[k] = v;
-        }
+      // images - only add if new images are selected
+      if (images.length > 0) {
+        images.forEach((file, idx) => {
+          data.append('images', file);
+        });
       }
+      
+      // include storeId from path or form
+      data.append('storeId', storeId || form.storeId || '');
 
-      // convert numeric fields
-      if (parsed.price) parsed.price = Number(parsed.price);
-      if (parsed.originalPrice) parsed.originalPrice = Number(parsed.originalPrice);
-      if (parsed.stockQuantity) parsed.stockQuantity = Number(parsed.stockQuantity);
+      // Choose endpoint based on mode
+      const endpoint = isEditMode 
+        ? `${base}/api/product/edit-spare-part/${productId}`
+        : `${base}/api/product/add-spare-part`;
+      
+      const method = isEditMode ? 'put' : 'post';
 
-      // convenience: image file names
-      if (parsed.images) parsed.imageNames = parsed.images.map((f) => f.name);
+      console.log('Submitting to:', endpoint, 'Method:', method);
+      console.log('FormData entries:', [...data.entries()].map(([k, v]) => [k, v instanceof File ? v.name : v]));
 
-      console.log('Parsed payload object:', parsed);
+      const res = await axios[method](endpoint, data, { withCredentials: true });
 
-      // send - DO NOT set Content-Type manually so browser/axios can add the multipart boundary
-      const res = await axios.post(endpoint, data, { withCredentials: true });
-
-
-      setSuccess(res.data?.message || 'Product uploaded');
-      setForm({
-        name: '',
-        partNumber: '',
-        brand: '',
-        category: '',
-        subcategory: '',
-        description: '',
-        specifications: { dimensions: '', weight: '', material: '', compatibility: [''], warranty: '' },
-        price: '',
-        originalPrice: '',
-        stockQuantity: '',
-  storeId: storeId || queryStoreId || '',
-        dealerId: '',
-      });
-      setImages([]);
-      setImagePreviews([]);
+      setSuccess(res.data?.message || `Product ${isEditMode ? 'updated' : 'uploaded'} successfully`);
+      
+      if (!isEditMode) {
+        // Reset form only for create mode
+        setForm({
+          name: '',
+          partNumber: '',
+          brand: '',
+          category: '',
+          subcategory: '',
+          description: '',
+          specifications: { dimensions: '', weight: '', material: '', compatibility: [''], warranty: '' },
+          price: '',
+          originalPrice: '',
+          stockQuantity: '',
+          storeId: storeId || '',
+        });
+        setImages([]);
+        setImagePreviews([]);
+        setExistingImages([]);
+      } else {
+        // In edit mode, refresh the product data to show updated info
+        setTimeout(() => fetchProductData(), 1000);
+      }
     } catch (err) {
       console.error(err);
-      const msg = err?.response?.data?.message || err.message || 'Upload failed';
+      const msg = err?.response?.data?.message || err.message || `${isEditMode ? 'Update' : 'Upload'} failed`;
       setError(msg);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleDelete = async () => {
+    if (!isEditMode || !productId) return;
+    
+    if (!window.confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await axios.delete(`${base}/api/product/delete-spare-part/${productId}`, {
+        withCredentials: true
+      });
+      
+      setSuccess('Product deleted successfully');
+      // Navigate back to products list or store page
+      setTimeout(() => {
+        navigate(`/store/${storeId}`); // Adjust this route as needed
+      }, 1500);
+    } catch (err) {
+      console.error('Delete error:', err);
+      const msg = err?.response?.data?.message || err.message || 'Delete failed';
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const removeExistingImage = (index) => {
+    setExistingImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  if (loadingProduct) {
+    return (
+      <div className="max-w-3xl mx-auto p-6 bg-white rounded shadow">
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading product data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-3xl mx-auto p-6 bg-white rounded shadow">
-      <h2 className="text-xl font-semibold mb-4">Upload Spare Part</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-semibold">
+          {isEditMode ? 'Edit Spare Part' : 'Upload Spare Part'}
+        </h2>
+        {isEditMode && (
+          <button 
+            onClick={handleDelete}
+            disabled={loading}
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+          >
+            {loading ? 'Deleting...' : 'Delete Product'}
+          </button>
+        )}
+      </div>
+      
       {error && <div className="mb-3 text-sm text-red-700 bg-red-50 p-2 rounded">{error}</div>}
       {success && <div className="mb-3 text-sm text-green-700 bg-green-50 p-2 rounded">{success}</div>}
 
@@ -293,21 +385,79 @@ const ProductUpload = () => {
         </div>
 
         <div className="border-t pt-4">
-          <label className="block text-sm font-medium">Images</label>
-          <input type="file" accept="image/*" multiple onChange={onImagesChange} className="mt-1" />
+          <label className="block text-sm font-medium mb-2">Images</label>
+          
+          {/* Show existing images in edit mode */}
+          {isEditMode && existingImages.length > 0 && (
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-2">Current Images:</p>
+              <div className="grid grid-cols-4 gap-2">
+                {existingImages.map((src, i) => (
+                  <div key={i} className="relative">
+                    <img src={src} alt={`existing-${i}`} className="h-24 w-full object-cover rounded" />
+                    <button 
+                      type="button"
+                      onClick={() => removeExistingImage(i)}
+                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          <input 
+            type="file" 
+            accept="image/*" 
+            multiple 
+            onChange={onImagesChange} 
+            className="mt-1" 
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            {isEditMode ? 'Select new images to replace existing ones' : 'Select multiple images for your product'}
+          </p>
+          
+          {/* Show new image previews */}
           {imagePreviews.length > 0 && (
-            <div className="mt-2 grid grid-cols-4 gap-2">
-              {imagePreviews.map((src, i) => (
-                <img key={i} src={src} alt={`preview-${i}`} className="h-24 w-full object-cover rounded" />
-              ))}
+            <div className="mt-2">
+              <p className="text-sm text-gray-600 mb-2">New Images Preview:</p>
+              <div className="grid grid-cols-4 gap-2">
+                {imagePreviews.map((src, i) => (
+                  <img key={i} src={src} alt={`preview-${i}`} className="h-24 w-full object-cover rounded" />
+                ))}
+              </div>
             </div>
           )}
         </div>
 
         <div className="flex items-center justify-between pt-4">
-          <button type="submit" disabled={loading} className="px-4 py-2 bg-green-600 text-white rounded">
-            {loading ? 'Uploading...' : 'Upload Product'}
-          </button>
+          <div className="flex space-x-3">
+            <button 
+              type="submit" 
+              disabled={loading} 
+              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+            >
+              {loading ? (isEditMode ? 'Updating...' : 'Uploading...') : (isEditMode ? 'Update Product' : 'Upload Product')}
+            </button>
+            
+            {isEditMode && (
+              <button 
+                type="button"
+                onClick={() => navigate(`/store/${storeId}`)}
+                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
+          
+          {isEditMode && (
+            <p className="text-sm text-gray-500">
+              Product ID: {productId}
+            </p>
+          )}
         </div>
       </form>
     </div>
