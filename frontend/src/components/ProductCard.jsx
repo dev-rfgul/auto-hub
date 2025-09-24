@@ -11,7 +11,7 @@ const ProductCard = ({ p }) => (
         <div className="text-sm text-gray-500">{p.brand}</div>
         <div className="mt-1 font-medium text-gray-900 truncate">{p.name}</div>
         <div className="mt-2 flex items-center justify-between">
-          <div className="text-lg font-semibold text-green-600">${p.price?.toFixed(2)}</div>
+          <div className="text-lg font-semibold text-green-600">PKR{p.price?.toFixed(2)}</div>
           <div className="text-sm text-gray-500">{p.stockQuantity > 0 ? 'In stock' : 'Out'}</div>
         </div>
       </div>

@@ -162,8 +162,8 @@ const ProductPreview = ({ product: initialProduct = null }) => {
               </div>
             </div>
             <div className="text-right">
-              <div className="text-2xl font-bold text-green-600">${p.price?.toFixed(2)}</div>
-              {p.originalPrice && <div className="text-sm text-gray-500 line-through">${p.originalPrice.toFixed(2)}</div>}
+              <div className="text-2xl font-bold text-green-600">PKR{p.price?.toFixed(2)}</div>
+              {p.originalPrice && <div className="text-sm text-gray-500 line-through">PKR{p.originalPrice.toFixed(2)}</div>}
             </div>
           </div>
 
