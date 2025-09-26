@@ -27,46 +27,120 @@ const UserDashboard = () => {
   const formValid = Object.values(shippingForm).every(v => String(v || '').trim() !== '');
 
   useEffect(() => {
-    // Get user info from cookie
-    let userData = null;
-    try {
-      const userCookie = Cookie.get('user');
-      
-      // 1. First check if cookie exists and isn't the string "undefined"
-      if (userCookie && userCookie !== "undefined") {
-        // 2. Separate try/catch just for parsing
+    // Get user info from cookie and API
+    const fetchLatestUser = async () => {
+      let userData = null;
+      try {
+        const base = import.meta.env.VITE_BACKEND_URL || "";
+        
+        // First try the authenticated /me endpoint on the backend
+        // This works when the backend sets httpOnly cookies (production behind proxy)
         try {
-          userData = JSON.parse(userCookie);
-          console.log('User cookie parsed successfully:', userData);
-          setUser(userData);
-          // prefill shipping form when available
-          setShippingForm(prev => ({
-            ...prev,
-            fullName: userData.username || prev.fullName,
-            phone: userData.phone || prev.phone,
-            street: userData.address?.street || prev.street,
-            city: userData.address?.city || prev.city,
-            state: userData.address?.state || prev.state,
-            zipCode: userData.address?.zipCode || prev.zipCode,
-            country: userData.address?.country || prev.country
-          }));
-        } catch (parseError) {
-          console.error('Error parsing user cookie JSON:', parseError);
-          console.log('Raw cookie content:', userCookie);
+          const res = await axios.get(`${base}/api/user/me`, { withCredentials: true });
+          if (res && res.data) {
+            userData = res.data;
+            Cookie.set("user", JSON.stringify(userData));
+            console.log('User data fetched from API:', userData);
+            setUser(userData);
+            
+            // prefill shipping form when available
+            setShippingForm(prev => ({
+              ...prev,
+              fullName: userData.username || prev.fullName,
+              phone: userData.phone || prev.phone,
+              street: userData.address?.street || prev.street,
+              city: userData.address?.city || prev.city,
+              state: userData.address?.state || prev.state,
+              zipCode: userData.address?.zipCode || prev.zipCode,
+              country: userData.address?.country || prev.country
+            }));
+            
+            // Fetch cart with the user data
+            if (userData && userData._id) {
+              fetchCart(userData._id);
+              return; // Exit early if we got data from API
+            }
+          }
+        } catch (meErr) {
+          console.log('API /me endpoint failed, falling back to cookie:', meErr.message);
+          // /me may return 401 when not authenticated or CORS/preflight fails
+          // We'll fall back to reading the client-visible cookie below
         }
-      } else {
-        console.log('No valid user cookie found or cookie value is "undefined"');
-      }
-    } catch (e) {
-      console.error('Error accessing user cookie:', e);
-    }
 
-    // Fetch cart only if user data is available
-    if (userData && userData._id) {
-      fetchCart(userData._id);
-    } else {
-      setLoading(false); // Make sure to turn off loading if no user
-    }
+        // Fallback: try the client cookie (useful for local dev or when cookie is available on frontend)
+        const userCookie = Cookie.get("user");
+        
+        // Check if cookie exists and isn't the string "undefined"
+        if (userCookie && userCookie !== "undefined") {
+          try {
+            userData = JSON.parse(userCookie);
+            console.log('User cookie parsed successfully:', userData);
+            setUser(userData);
+            
+            // prefill shipping form when available
+            setShippingForm(prev => ({
+              ...prev,
+              fullName: userData.username || prev.fullName,
+              phone: userData.phone || prev.phone,
+              street: userData.address?.street || prev.street,
+              city: userData.address?.city || prev.city,
+              state: userData.address?.state || prev.state,
+              zipCode: userData.address?.zipCode || prev.zipCode,
+              country: userData.address?.country || prev.country
+            }));
+          } catch (parseError) {
+            console.error('Error parsing user cookie JSON:', parseError);
+            console.log('Raw cookie content:', userCookie);
+            userData = null;
+          }
+        } else {
+          console.log('No valid user cookie found or cookie value is "undefined"');
+        }
+        
+        // Try direct document.cookie approach as last resort (handles some edge cases in production)
+        if (!userData) {
+          try {
+            const cookies = document.cookie.split(';');
+            const userCookieStr = cookies.find(c => c.trim().startsWith('user='));
+            
+            if (userCookieStr) {
+              const cookieValue = userCookieStr.split('=')[1];
+              if (cookieValue && cookieValue !== "undefined") {
+                const decodedValue = decodeURIComponent(cookieValue);
+                userData = JSON.parse(decodedValue);
+                console.log('User cookie parsed from document.cookie:', userData);
+                setUser(userData);
+                
+                // prefill shipping form
+                setShippingForm(prev => ({
+                  ...prev,
+                  fullName: userData.username || prev.fullName,
+                  phone: userData.phone || prev.phone,
+                  street: userData.address?.street || prev.street,
+                  city: userData.address?.city || prev.city,
+                  state: userData.address?.state || prev.state,
+                  zipCode: userData.address?.zipCode || prev.zipCode,
+                  country: userData.address?.country || prev.country
+                }));
+              }
+            }
+          } catch (docCookieError) {
+            console.error('Error parsing document.cookie:', docCookieError);
+          }
+        }
+      } catch (e) {
+        console.error('Error in fetchLatestUser:', e);
+      } finally {
+        // Fetch cart only if user data is available
+        if (userData && userData._id) {
+          fetchCart(userData._id);
+        } else {
+          setLoading(false); // Make sure to turn off loading if no user
+        }
+      }
+    };
+
+    fetchLatestUser();
   }, []);
 
   const fetchCart = async (userId) => {
