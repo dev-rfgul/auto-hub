@@ -31,29 +31,41 @@ const UserDashboard = () => {
     let userData = null;
     try {
       const userCookie = Cookie.get('user');
-      console.log('User cookie:', JSON.parse(userCookie));
-      if (userCookie) {
-        userData = JSON.parse(userCookie);
-        setUser(userData);
-        // prefill shipping form when available
-        setShippingForm(prev => ({
-          ...prev,
-          fullName: userData.username || prev.fullName,
-          phone: userData.phone || prev.phone,
-          street: userData.address?.street || prev.street,
-          city: userData.address?.city || prev.city,
-          state: userData.address?.state || prev.state,
-          zipCode: userData.address?.zipCode || prev.zipCode,
-          country: userData.address?.country || prev.country
-        }));
+      
+      // 1. First check if cookie exists and isn't the string "undefined"
+      if (userCookie && userCookie !== "undefined") {
+        // 2. Separate try/catch just for parsing
+        try {
+          userData = JSON.parse(userCookie);
+          console.log('User cookie parsed successfully:', userData);
+          setUser(userData);
+          // prefill shipping form when available
+          setShippingForm(prev => ({
+            ...prev,
+            fullName: userData.username || prev.fullName,
+            phone: userData.phone || prev.phone,
+            street: userData.address?.street || prev.street,
+            city: userData.address?.city || prev.city,
+            state: userData.address?.state || prev.state,
+            zipCode: userData.address?.zipCode || prev.zipCode,
+            country: userData.address?.country || prev.country
+          }));
+        } catch (parseError) {
+          console.error('Error parsing user cookie JSON:', parseError);
+          console.log('Raw cookie content:', userCookie);
+        }
+      } else {
+        console.log('No valid user cookie found or cookie value is "undefined"');
       }
     } catch (e) {
-      console.error('Error parsing user cookie:', e);
+      console.error('Error accessing user cookie:', e);
     }
 
     // Fetch cart only if user data is available
     if (userData && userData._id) {
       fetchCart(userData._id);
+    } else {
+      setLoading(false); // Make sure to turn off loading if no user
     }
   }, []);
 
