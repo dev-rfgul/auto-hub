@@ -75,9 +75,9 @@ const ProductCard = ({ product }) => {
 
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <span className="text-lg font-bold text-green-600">${price}</span>
+            <span className="text-lg font-bold text-green-600">PKR: {price}</span>
             {originalPrice > price && (
-              <span className="text-sm text-gray-500 line-through">${originalPrice}</span>
+              <span className="text-sm text-gray-500 line-through">PKR: {originalPrice}</span>
             )}
           </div>
           <div className={`text-xs px-2 py-1 rounded-full ${
@@ -309,7 +309,7 @@ const brands = useMemo(() => {
                 />
                 <h3 className="font-medium text-sm text-gray-900 mb-1 line-clamp-2">{product?.name || 'Product Name'}</h3>
                 <div className="text-xs text-gray-500 mb-2">{product?.brand || 'Unknown Brand'}</div>
-                <div className="text-lg font-bold text-green-600">${product?.price || 0}</div>
+                <div className="text-lg font-bold text-green-600">PKR: {product?.price || 0}</div>
               </div>
               </Link>
             ))}

@@ -231,17 +231,18 @@ const DealerHome = () => {
                           <div className="flex-shrink-0 w-36 text-right">
                             {isApproved ? (
                               <div className="flex flex-col items-end space-y-2">
-                                <Link to={`/dealer/store/${s._id}`} className="w-full inline-flex justify-center items-center px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700">View</Link>
+                                <Link to={`/dealer/store/${s._id}`} className="w-full inline-flex justify-center items-center px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700">Manage Store</Link>
+                                <Link to={`/product-upload/${s._id}`} className="w-full inline-flex justify-center items-center px-3 py-2 bg-green-600 text-white rounded-md text-sm hover:bg-green-700">Add Product</Link>
                               </div>
                             ) : isRejected ? (
                               <div className="flex flex-col items-end space-y-2">
-                                <button disabled className="w-full inline-flex justify-center items-center px-3 py-2 bg-gray-200 text-gray-500 rounded-md text-sm cursor-not-allowed">View</button>
+                                <button disabled className="w-full inline-flex justify-center items-center px-3 py-2 bg-gray-200 text-gray-500 rounded-md text-sm cursor-not-allowed">Manage Store</button>
                                 <Link to={`/store-signup`} className="w-full inline-flex justify-center items-center px-3 py-2 bg-yellow-100 text-yellow-800 rounded-md text-sm hover:bg-yellow-200">Resubmit</Link>
                                 <p className="mt-1 text-xs text-red-700">Your store was rejected.</p>
                               </div>
                             ) : (
                               <div className="flex flex-col items-end space-y-2">
-                                <button disabled className="w-full inline-flex justify-center items-center px-3 py-2 bg-gray-200 text-gray-500 rounded-md text-sm cursor-not-allowed">View</button>
+                                <button disabled className="w-full inline-flex justify-center items-center px-3 py-2 bg-gray-200 text-gray-500 rounded-md text-sm cursor-not-allowed">Manage Store</button>
                                 <p className="mt-1 text-xs text-yellow-700">Not approved yet</p>
                               </div>
                             )}
