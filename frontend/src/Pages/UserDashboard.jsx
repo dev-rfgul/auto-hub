@@ -526,10 +526,6 @@ const UserDashboard = () => {
                     <input type="radio" name="payment" checked={paymentMethod === 'cod'} onChange={() => setPaymentMethod('cod')} />
                     <span className="text-sm">Cash on delivery</span>
                   </label>
-                  <label className="flex items-center gap-2">
-                    <input type="radio" name="payment" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} />
-                    <span className="text-sm">Card (placeholder)</span>
-                  </label>
                 </div>
               </div>
 
